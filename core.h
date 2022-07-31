@@ -9,7 +9,7 @@
 /* CORE VERSION DEFINITIONS */
 #define VCORE_VERSION_MAJOR 0
 #define VCORE_VERSION_MINOR 1
-#define VCORE_VERSION_PATCH 0
+#define VCORE_VERSION_PATCH 1
 
 /* CORE VERSION STRUCTURE */
 typedef struct vCOREVERSION
@@ -29,7 +29,7 @@ typedef struct vCORE
 	HANDLE heap;
 
 	/* small memory buffer */
-	vBYTE mBuffer[0x200];
+	vBYTE mBuffer[0x100];
 
 	/* current state of the core							*/
 	/* bit 0 -> has initialized?							*/
@@ -39,16 +39,25 @@ typedef struct vCORE
 /* CORE OBJECT */
 vCORE _vCore;
 
-/* INITIALIZATION FUNCTIONS */
+/* Initializes _vCore object by first zeroing memory and then populating	*/
+/* all of the members of the struct. Will terminate process if failes		*/
 VAPI vBOOL vCoreInitialize(void);
+
+/* Returns whether the _vCore object is initialized or not. Will return		*/
+/* incorrect values if the coreState member is corrupted or tampered with	*/
 VAPI vBOOL vCoreIsInitialized(void);
+
+/* Checks if the first bit of the coreState member in the core object is	*/
+/* set to 1. If not, will create an error and then terminate the process	*/
 VAPI vVOID vCoreEnsureInitialized(void);
 
-/* ERROR MESSAGE FUNCTION */
-VAPI vVOID vCoreCreateErrorMessage(const char* action, const char* remarks,
+/* Creates and error message which specifies the attempted action which		 */
+/* failed, any remarks from the dev, and whether to terminate the process	 */
+/* once the messagebox is acknowleged. action and remarks params can be NULL */
+VAPI vVOID vCoreCreateErrorMessage(const char* triedAction, const char* remarks,
 	vBOOL terminateAfterMessageClose);
 
-/* CORE VERSION RELATED FUNCTIONS */
+/* Takes a core version structure and populates it with relevant information */
 VAPI vVOID vCoreGetVersion(vPCOREVERSION out);
 
 
