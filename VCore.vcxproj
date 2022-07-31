@@ -154,8 +154,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="core.h" />
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="pch.h" />
     <ClInclude Include="internal.h" />
   </ItemGroup>
   <ItemGroup>
