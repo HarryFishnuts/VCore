@@ -154,10 +154,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="core.h" />
+    <ClInclude Include="err.h" />
     <ClInclude Include="internal.h" />
+    <ClInclude Include="mem.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core.c" />
+    <ClCompile Include="err.c" />
+    <ClCompile Include="mem.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

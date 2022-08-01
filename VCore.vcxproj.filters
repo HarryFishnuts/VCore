@@ -15,15 +15,27 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="internal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="core.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="internal.h">
+    <ClInclude Include="mem.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="err.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="core.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="mem.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="err.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

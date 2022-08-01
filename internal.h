@@ -1,97 +1,111 @@
 
-/* HEADER GUARD BEGIN */
+/* ========== <internal.h>						========== */
+/* Bailey Jia-Tao Brown			2022					   */
+/* Holds all types, structs and definitions used in VCore  */
+
+
 #ifndef _VCORE_INTERNAL_INCLUDE_
 #define _VCORE_INTERNAL_INCLUDE_
 
-/* PREPROCESSOR DEFS */
-#define _WIN32_LEAN_AND_MEAN
+/* ========== PREPROCESSOR DEFINITIONS			========== */
 #define _CRT_SECURE_NO_WARNINGS
+#define WIN32_LEAN_AND_MEAN
 
-/* INCLUDES */
+
+/* ========== INCLUDES							========== */
 #include <stdint.h>
 #include <Windows.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-/* UNSIGNED TYPES */
-typedef void		vVOID;
-typedef uint8_t		vBYTE;
-typedef uint8_t		vBOOL;
-typedef uint8_t		vUI8;
-typedef uint16_t	vUI16;
-typedef uint32_t	vUI32;
-typedef uint32_t	vHNDL;
-typedef HANDLE		vWHNDL;
-typedef uint64_t	vUI64;
-typedef uint64_t	vTIME;
+/* ========== DEFINITIONS						========== */
+#define ZERO		0
+#define NO_FLAGS	(DWORD)0
+#define NO_HANDLE	(HANDLE)0
+#define NO_WINDOW	(HWND)0
 
-/* SIGNED TYPES */
-typedef int8_t		vI8;
-typedef int16_t		vI16;
-typedef int			vINT;
-typedef int32_t		vI32;
-typedef int64_t		vI64;
+#define BUFF_TINY	0x40
+#define BUFF_SMALL	0x80
+#define BUFF_MEDIUM 0x100
+#define BUFF_LARGE	0x200
 
-/* FLOAT TYPES */
-typedef float		vF32;
-typedef double		vF64;
+#define MAX_ACTIONS_SAVED_IN_MEMORY		0x80
+#define ACTION_LOG_DUMP_INTERVAL_SEC	0x20
 
-/* POINTER TYPES */
-typedef void*		vPTR;
-typedef vBYTE*		vPBYTE;
-typedef vBOOL*		vPBOOL;
-typedef vUI8*		vPUI8;
-typedef vUI16*		vPUI16;
-typedef vUI32*		vPUI32;
-typedef vHNDL*		vPHNDL;
-typedef vWHNDL*		vPWHNDL;
-typedef vUI64*		vPUI64;
-typedef vTIME*		vPTIME;
-typedef vI8*		vPI8;
-typedef vI16*		vPI16;
-typedef vINT*		vPINT;
-typedef vI32*		vPI32;
-typedef vI64*		vPI64;
-
-/* VECTOR TYPES */
-typedef struct vIV16
-{
-	vI16 x;
-	vI16 y;
-} vIV16, *vPIV16;
-typedef struct vIV32
-{
-	vI32 x;
-	vI32 y;
-} vIV32, *vPIV32;
-typedef struct vIV64
-{
-	vI64 x;
-	vI64 y;
-} vIV64, *vPIV64;
-typedef struct vFV32
-{
-	vF32 x;
-	vF32 y;
-} vFV32, *vPFV32;
-typedef struct vFV64
-{
-	vF64 x;
-	vF64 y;
-} vFV64, *vPFV64;
-
-/* API DEFINITION */
 #ifdef VCORE_EXPORTS
 #define VAPI __declspec(dllexport)
 #else
 #define VAPI __declspec(dllimport)
 #endif
 
-#ifdef __cplusplus
-}
-#endif
 
-/* HEADER GUARD END */
+/* ========== TYPE DEFINITIONS					========== */
+
+/* unsigned integers									   */
+typedef uint8_t		vUI8;
+typedef uint16_t	vUI16;
+typedef uint32_t	vUI32;
+typedef uint64_t	vUI64;
+
+/* signed integers										   */
+typedef int8_t		vI8;
+typedef int16_t		vI16;
+typedef int32_t		vI32;
+typedef int64_t		vI64;
+
+/* unsigned integer pointers							   */
+typedef vUI8*		vPUI8;
+typedef vUI16*		vPUI16;
+typedef vUI32*		vPUI32;
+typedef vUI64*		vPUI64;
+
+/* signed integer pointers								   */
+typedef vI8*		vPI8;
+typedef vI16*		vPI16;
+typedef vI32*		vPI32;
+typedef vI64*		vPI64;
+
+/* misc types											   */
+typedef void*		vPTR;
+typedef uint8_t		vBYTE;
+typedef uint8_t		vBOOL;
+typedef vUI32		vHNDL;
+typedef vUI64		vTIME;
+
+
+/* ========== ENUMERATIONS						========== */
+
+/* action type enumeration								   */
+typedef enum vEnumActionType
+{
+	vActionType_UNUSED		= 0,
+	vActionType_ACTION		= 1,
+	vActionType_WARNING		= 2,
+	vActionType_ERROR		= 3
+} vEnumActionType;
+
+/* ========== ACTION AND LOGGING STRUCTURES		========== */
+typedef struct vActionLog
+{
+	vEnumActionType type;
+	char	action[BUFF_SMALL];
+	char	remark[BUFF_MEDIUM];
+	vTIME	timeCreated;
+} vActionLog, *vPActionLog;
+
+typedef struct vActionLogBuffer
+{
+	vTIME		lastDump;
+	char		actionWriteFileName[BUFF_TINY];
+	vI16		actionIndex;
+	vActionLog	actionLog[MAX_ACTIONS_SAVED_IN_MEMORY];
+} vActionLogBuffer, *vPActionLogBuffer;
+
+
+/* ========== CORE LIBRARY STRUCTURE			========== */
+typedef struct vCoreLibrary
+{
+	vTIME initializeTime;
+	vActionLogBuffer actionLog;
+} vCoreLibrary, *vPCoreLibrary;
+
 #endif
