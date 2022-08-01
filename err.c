@@ -109,7 +109,7 @@ VAPI void vLogError(const char* error, const char* remarks)
 static OVERLAPPED __overlapped = { 0 };
 VAPI void vDumpLogBuffer(void)
 {
-	vLogAction("LogBuffer Dump", "N/A");
+	vLogAction("LogBuffer Dump", "_vcore->actionLog is being written to disk");
 
 	/* CRITICAL SECT ENTER */ verrCaptureBufferRWPermission();
 

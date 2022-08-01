@@ -7,6 +7,9 @@
 #include "buffer.h"
 #include <stdio.h>
 
+/* ========== INTERNAL DATA						==========	*/
+static char __remarkBuffer[BUFF_MEDIUM];
+
 
 /* ========== INTERNAL FUNCTIONS				==========	*/
 
@@ -20,7 +23,7 @@ static inline void vbuffReleaseRWPermission(void)
 	LeaveCriticalSection(&_vcore->bufferHandler.rwPermission);
 }
 
-static inline vI32 vbuffFindFreeBufferIndex(void)
+static inline vI32 vbuffFindFreeBufferObject(void)
 {
 	int startIndex = _vcore->bufferHandler.bufferCount >> 1;
 	for (vI32 i = startIndex; i < MAX_BUFFER_OBJECTS; i++)
@@ -31,6 +34,11 @@ static inline vI32 vbuffFindFreeBufferIndex(void)
 
 	/* on reached here, no buffers left */
 	vCoreCreateFatalError("Buffer Objects Full");
+}
+
+static inline vI32 vbuffFindFreeBufferObjectSpot(vPBufferObject object)
+{
+	
 }
 
 
@@ -51,7 +59,6 @@ VAPI void _vBufferTerminate(void)
 
 /* creates a buffer behavior for buffer objects to adhere	*/
 /* to. buffer behaviors cannot be destroyed.				*/
-static char __VCBBremarkFmtBuff[BUFF_MEDIUM];
 VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
 	vI32 bufferSize, vBOOL threadSafe, vBOOL lockPerElement,
 	vBOOL zeroElements, vPFBUFFINITIALIZER elementInitCallback,
@@ -65,7 +72,7 @@ VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
 	vPBufferBehavior bhvPtr = _vcore->bufferHandler.behaviors + _vcore->bufferHandler.behaviorCount;
 
 	/* set members */
-	__movsb(&bhvPtr->name, name, strlen(name));
+	__movsb(bhvPtr->name, name, strlen(name));
 	bhvPtr->initializer = elementInitCallback;
 	bhvPtr->destructor  = elementDestroyCallback;
 	bhvPtr->elementSize = elementSize;
@@ -77,10 +84,10 @@ VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
 	if (zeroElements)	_bittestandset(&bhvPtr->flags, 2);
 	
 	/* log creation */
-	sprintf_s(__VCBBremarkFmtBuff, sizeof(__VCBBremarkFmtBuff), "NAME: %s\nINDEX: %d\nSIZE: %d\n"
-		"LENGTH: %d\nTHREADSAFE: %d\n", name, _vcore->bufferHandler.behaviorCount,
-		(vI32)elementSize, bufferSize, threadSafe);
-	vLogAction("Created Buffer Behavior", __VCBBremarkFmtBuff);
+	sprintf_s(__remarkBuffer, sizeof(__remarkBuffer), "NAME: %s\nINDEX: %d\nSIZE: %d\n"
+		"LENGTH: %d\nTHREADSAFE: %d\n", bhvPtr->name, _vcore->bufferHandler.behaviorCount,
+		(vI32)elementSize, bufferSize, _bittest(&bhvPtr->flags, 0));
+	vLogAction("Created Buffer Behavior", __remarkBuffer);
 
 	_vcore->bufferHandler.behaviorCount++; /* INCREMENT BUFFERBHV COUNT */
 
@@ -90,7 +97,6 @@ VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
 }
 
 /* creates a buffer object to holds things within.			 */
-static char _VCBremarkFmtBuff[BUFF_MEDIUM];
 VAPI vHNDL vCreateBuffer(const char* name, vHNDL behavior)
 {
 	/* CRITICAL SECT ENTER */ vbuffCaptureRWPermission();
@@ -98,9 +104,9 @@ VAPI vHNDL vCreateBuffer(const char* name, vHNDL behavior)
 	vPBufferBehavior bhv = _vcore->bufferHandler.behaviors + behavior;
 
 	/* allocate buffer object to heap */
-	vI32 buffIndex = vbuffFindFreeBufferIndex();
+	vI32 buffIndex = vbuffFindFreeBufferObject();
+	_vcore->bufferHandler.buffers[buffIndex] = vAllocZeroed(sizeof(vBufferObject));
 	vPBufferObject buff = _vcore->bufferHandler.buffers[buffIndex];
-	buff = vAllocZeroed(sizeof(vBufferObject));
 
 	/* copy name */
 	__movsb(buff->name, name, strlen(name));
@@ -109,6 +115,7 @@ VAPI vHNDL vCreateBuffer(const char* name, vHNDL behavior)
 	vI32 fieldSize = (bhv->bufferSize >> 0x6) + 1;
 	buff->field = vAllocZeroed(sizeof(vUI64) * fieldSize);
 	buff->data  = vAllocZeroed(bhv->elementSize * bhv->bufferSize);
+	buff->behavior = bhv;
 
 	/* initialize buffer rw mutex */
 	InitializeCriticalSection(&buff->rwPermission);
@@ -116,17 +123,45 @@ VAPI vHNDL vCreateBuffer(const char* name, vHNDL behavior)
 	_vcore->bufferHandler.bufferCount++;
 
 	/* log buffer creation */
-	sprintf_s(__VCBBremarkFmtBuff, sizeof(__VCBBremarkFmtBuff),
+	sprintf_s(__remarkBuffer, sizeof(__remarkBuffer),
 		"NAME: %s\nBEHAVIOR:%s\nINDEX:%d\n", buff->name, bhv->name,
 		buffIndex);
-	vLogAction("Created Buffer", __VCBBremarkFmtBuff);
+	vLogAction("Created Buffer", __remarkBuffer);
 
 	/* CRITICAL SECT LEAVE */ vbuffReleaseRWPermission();
 
+	return buffIndex;
 }
 
 /* destroys a buffer object									 */
-VAPI vBOOL vDestroyBuffer(vHNDL bufferHndl);
+VAPI vBOOL vDestroyBuffer(vHNDL bufferHndl)
+{
+	/* CRITICAL SECT ENTER */ vbuffCaptureRWPermission();
+
+	vPBufferObject buff = _vcore->bufferHandler.buffers[bufferHndl];
+	if (buff == NULL) return FALSE;
+
+	/* log buffer deletion */
+	sprintf_s(__remarkBuffer, sizeof(__remarkBuffer),
+		"NAME: %s\nBEHAVIOR: %s\nINDEX: %d\n", buff->name, buff->behavior->name,
+		bufferHndl);
+	vLogAction("Destroying Buffer", __remarkBuffer);
+
+	/* regain ownership of buff RW and then delete it */
+	EnterCriticalSection(&buff->rwPermission);
+	DeleteCriticalSection(&buff->rwPermission);
+
+	vFree(buff->field);
+	vFree(buff->data);
+	vFree(buff);
+
+	_vcore->bufferHandler.bufferCount--;
+	_vcore->bufferHandler.buffers[bufferHndl] = NULL;
+
+	/* CRITICAL SECT LEAVE */ vbuffReleaseRWPermission();
+
+	return TRUE;
+}
 
 
 /* ========== BUFFER ELEMENT OPERATIONS			==========	*/
