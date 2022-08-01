@@ -15,7 +15,7 @@ static HANDLE _vMemHeap = NO_HANDLE;
 
 VAPI void _vMemInit(void)
 {
-	_vMemHeap = HeapCreate(NO_FLAGS, ZERO, ZERO);
+	_vMemHeap = HeapCreate(NO_FLAGS, ZERO, MAX_MEMORY_ALLOCATEABLE);
 	if (!_vMemHeap) vCoreCreateFatalError("Heap Create Failed");
 }
 

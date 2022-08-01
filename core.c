@@ -17,6 +17,7 @@ VAPI vBOOL vCoreInitialize(void)
 	
 	_vMemInit();
 	_vcore = vAllocZeroed(sizeof(vCoreLibrary));
+	_vErrInit("logfile.txt");
 
 	_vcore->initializeTime = GetTickCount64();
 }
@@ -31,6 +32,7 @@ VAPI vBOOL vCoreIsInitialized(void)
 VAPI vBOOL vCoreTerminate(void)
 {
 	if (!_vcore) return FALSE;
+	_vErrTerminate();
 	vFree(_vcore);
 	_vMemTerminate();
 	return TRUE;
@@ -64,5 +66,5 @@ VAPI void vCoreCreateFatalError(const char* description)
 	__movsb(__msgBoxDesc, description, strlen(description));
 	MessageBoxA(NO_WINDOW, __msgBoxDesc, __msgBoxCaption,
 		MB_OK | MB_ICONERROR);
-	__fastfail(ERROR_INVALID_FUNCTION);
+	ExitProcess(ERROR_INVALID_FUNCTION);
 }

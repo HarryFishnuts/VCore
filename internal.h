@@ -28,6 +28,7 @@
 #define BUFF_MEDIUM 0x100
 #define BUFF_LARGE	0x200
 
+#define MAX_MEMORY_ALLOCATEABLE			0x100000L
 #define MAX_ACTIONS_SAVED_IN_MEMORY		0x80
 #define ACTION_LOG_DUMP_INTERVAL_SEC	0x20
 
@@ -71,6 +72,11 @@ typedef uint8_t		vBOOL;
 typedef vUI32		vHNDL;
 typedef vUI64		vTIME;
 
+/* buffer callbacks										   */
+typedef void  (*vPFBUFFITERATOR)(vI32 index, vPTR element);
+typedef void  (*vPBUFFINITIALIZER)(vI32 index, vPTR element, vPTR external);
+typedef vBOOL (*vPFBUFFCONDITIONAL)(vI32 index, vPTR element);
+
 
 /* ========== ENUMERATIONS						========== */
 
@@ -83,17 +89,29 @@ typedef enum vEnumActionType
 	vActionType_ERROR		= 3
 } vEnumActionType;
 
+/* buffering status enumeration							   */
+typedef enum vEnumBufferStatus
+{
+	vBufferStatus_SUCESS		= 0,
+	vBufferStatus_OUTOFSPACE	= 1,
+} vEnumBufferStatus;
+
+
+
 /* ========== ACTION AND LOGGING STRUCTURES		========== */
+
 typedef struct vActionLog
 {
 	vEnumActionType type;
-	char	action[BUFF_SMALL];
+	char	action[BUFF_TINY];
 	char	remark[BUFF_MEDIUM];
 	vTIME	timeCreated;
 } vActionLog, *vPActionLog;
 
 typedef struct vActionLogBuffer
 {
+	CRITICAL_SECTION rwPermission;
+
 	vTIME		lastDump;
 	char		actionWriteFileName[BUFF_TINY];
 	vI16		actionIndex;
@@ -101,7 +119,20 @@ typedef struct vActionLogBuffer
 } vActionLogBuffer, *vPActionLogBuffer;
 
 
+/* ========== BUFFERING SYSTEM STRUCTURES		========== */
+
+typedef struct vBufferObject
+{
+	CRITICAL_SECTION rwPermission;
+
+	char name[BUFF_TINY];
+	vI32 elementCount;
+
+	vPTR data;
+};
+
 /* ========== CORE LIBRARY STRUCTURE			========== */
+
 typedef struct vCoreLibrary
 {
 	vTIME initializeTime;

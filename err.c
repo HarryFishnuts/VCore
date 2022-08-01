@@ -24,9 +24,21 @@ static void verrDumpIfTimeThreshPassed(void)
 }
 
 /* ========== INTERNAL FUNCTIONS				==========	*/
+static void verrCaptureBufferRWPermission(void)
+{
+	EnterCriticalSection(&_vcore->actionLog.rwPermission);
+}
+
+static void verrRelaseBufferRWPermission(void)
+{
+	LeaveCriticalSection(&_vcore->actionLog.rwPermission);
+}
+
 static void verrAddActionToBuffer(vEnumActionType type, const char* action, 
 	const char* remarks)
 {
+	/* CRITICAL SECT ENTER */ verrCaptureBufferRWPermission();
+
 	/* make action index rollover (circular array) */
 	if (_vcore->actionLog.actionIndex >
 		MAX_ACTIONS_SAVED_IN_MEMORY) _vcore->actionLog.actionIndex = 0;
@@ -40,6 +52,11 @@ static void verrAddActionToBuffer(vEnumActionType type, const char* action,
 		action, strlen(action));
 	__movsb(&_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].remark,
 		remarks, strlen(remarks));
+
+	/* increment action index */
+	_vcore->actionLog.actionIndex++;
+
+	/* CRITICAL SECT LEAVE */verrRelaseBufferRWPermission();
 }
 
 /* ========== INITIALIZATION FUNCTIONS			==========	*/
@@ -47,11 +64,15 @@ static void verrAddActionToBuffer(vEnumActionType type, const char* action,
 VAPI void _vErrInit(const char* logFileName)
 {
 	__movsb(&_vcore->actionLog.actionWriteFileName, logFileName, strlen(logFileName));
+
+	InitializeCriticalSection(&_vcore->actionLog.rwPermission);
 }
 
 VAPI void _vErrTerminate(void)
 {
 	vDumpLogBuffer();
+
+	DeleteCriticalSection(&_vcore->actionLog.rwPermission);
 }
 
 
@@ -90,6 +111,8 @@ VAPI void vDumpLogBuffer(void)
 {
 	vLogAction("LogBuffer Dump", "N/A");
 
+	/* CRITICAL SECT ENTER */ verrCaptureBufferRWPermission();
+
 	HANDLE fHandle = CreateFileA(_vcore->actionLog.actionWriteFileName, 
 		GENERIC_READ | GENERIC_WRITE, NO_FLAGS, NULL, CREATE_ALWAYS, 
 		FILE_ATTRIBUTE_NORMAL, NULL);
@@ -97,7 +120,11 @@ VAPI void vDumpLogBuffer(void)
 
 	_vcore->actionLog.lastDump = vCoreGetTime();
 
-	WriteFileEx(fHandle, &_vcore->actionLog, sizeof(_vcore->actionLog),
+	BOOL wResult = WriteFileEx(fHandle, &_vcore->actionLog, sizeof(_vcore->actionLog),
 		&__overlapped, verrFileWriteCompletionCallback);
+	if (!wResult) vCoreCreateFatalError("File Write Failed");
+
 	CloseHandle(fHandle);
+
+	/* CRITICAL SECT LEAVE */ verrRelaseBufferRWPermission();
 }

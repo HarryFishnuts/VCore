@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="buffer.h" />
     <ClInclude Include="core.h" />
     <ClInclude Include="err.h" />
     <ClInclude Include="internal.h" />
