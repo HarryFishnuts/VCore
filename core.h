@@ -13,6 +13,7 @@
 #include "internal.h"
 #include "mem.h"
 #include "err.h"
+#include "buffer.h"
 
 
 /* ========== LIBRARY OBJECT					==========	*/

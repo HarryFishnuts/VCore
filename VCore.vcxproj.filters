@@ -41,5 +41,8 @@
     <ClCompile Include="err.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="buffer.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

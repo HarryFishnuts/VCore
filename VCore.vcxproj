@@ -160,6 +160,7 @@
     <ClInclude Include="mem.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="buffer.c" />
     <ClCompile Include="core.c" />
     <ClCompile Include="err.c" />
     <ClCompile Include="mem.c" />

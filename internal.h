@@ -32,6 +32,9 @@
 #define MAX_ACTIONS_SAVED_IN_MEMORY		0x80
 #define ACTION_LOG_DUMP_INTERVAL_SEC	0x20
 
+#define MAX_BUFFER_BEHAVIORS	0x40
+#define MAX_BUFFER_OBJECTS		0x200
+
 #ifdef VCORE_EXPORTS
 #define VAPI __declspec(dllexport)
 #else
@@ -73,9 +76,10 @@ typedef vUI32		vHNDL;
 typedef vUI64		vTIME;
 
 /* buffer callbacks										   */
-typedef void  (*vPFBUFFITERATOR)(vI32 index, vPTR element);
-typedef void  (*vPBUFFINITIALIZER)(vI32 index, vPTR element, vPTR external);
-typedef vBOOL (*vPFBUFFCONDITIONAL)(vI32 index, vPTR element);
+typedef void (*vPFBUFFITERATOR)   (vI32 index, vPTR element);
+typedef void (*vPFBUFFINITIALIZER)(vI32 index, vPTR element);
+typedef void (*vPFBUFFDESTRUCTOR) (vI32 index, vPTR element);
+typedef void (*vPFBUFFOPERATION)  (vI32 index, vPTR element);
 
 
 /* ========== ENUMERATIONS						========== */
@@ -121,15 +125,46 @@ typedef struct vActionLogBuffer
 
 /* ========== BUFFERING SYSTEM STRUCTURES		========== */
 
+typedef struct vBufferBehavior
+{
+	char name[BUFF_TINY];
+
+	vPFBUFFINITIALIZER	initializer;
+	vPFBUFFDESTRUCTOR   destructor;
+	SIZE_T				elementSize;
+	vI32				bufferSize;
+
+	/* each bit corresponds to a behavior		*/
+	/* bit 0 -> is buffer threadsafe?			*/
+	/* bit 1 ->	0 =	lock per whole iteration	*/
+	/*			1 = lock per element			*/
+	/* bit 2 -> zero on allocate element?		*/
+	vBYTE				flags;
+
+} vBufferBehavior, *vPBufferBehavior;
+
 typedef struct vBufferObject
 {
+	vPBufferBehavior behavior;
 	CRITICAL_SECTION rwPermission;
 
 	char name[BUFF_TINY];
-	vI32 elementCount;
+	vI32 usedElementCount;
 
-	vPTR data;
-};
+	vPUI64 field;
+	vPUI8  data;
+} vBufferObject, *vPBufferObject;
+
+typedef struct vBufferHandler
+{
+	CRITICAL_SECTION rwPermission;
+
+	vI32 behaviorCount;
+	vI32 bufferCount;
+
+	vBufferBehavior behaviors[MAX_BUFFER_BEHAVIORS];
+	vPBufferObject	buffers[MAX_BUFFER_OBJECTS];
+} vBufferHandler, *vPBufferHandler;
 
 /* ========== CORE LIBRARY STRUCTURE			========== */
 
@@ -137,6 +172,7 @@ typedef struct vCoreLibrary
 {
 	vTIME initializeTime;
 	vActionLogBuffer actionLog;
+	vBufferHandler	 bufferHandler;
 } vCoreLibrary, *vPCoreLibrary;
 
 #endif

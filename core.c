@@ -18,6 +18,7 @@ VAPI vBOOL vCoreInitialize(void)
 	_vMemInit();
 	_vcore = vAllocZeroed(sizeof(vCoreLibrary));
 	_vErrInit("logfile.txt");
+	_vBufferInit();
 
 	_vcore->initializeTime = GetTickCount64();
 }
@@ -32,6 +33,7 @@ VAPI vBOOL vCoreIsInitialized(void)
 VAPI vBOOL vCoreTerminate(void)
 {
 	if (!_vcore) return FALSE;
+	_vBufferTerminate();
 	_vErrTerminate();
 	vFree(_vcore);
 	_vMemTerminate();
