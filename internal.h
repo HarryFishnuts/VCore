@@ -135,13 +135,6 @@ typedef struct vBufferBehavior
 	vI32				elementCount;
 	vI32				fieldChunkCount;
 
-	/* each bit corresponds to a behavior		*/
-	/* bit 0 -> is buffer threadsafe?			*/
-	/* bit 1 ->	0 =	lock per whole iteration	*/
-	/*			1 = lock per element			*/
-	/* bit 2 -> zero on allocate element?		*/
-	vBYTE				flags;
-
 } vBufferBehavior, *vPBufferBehavior;
 
 typedef struct vBufferObject

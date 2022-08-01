@@ -21,6 +21,8 @@ VAPI vBOOL vCoreInitialize(void)
 	_vBufferInit();
 
 	_vcore->initializeTime = GetTickCount64();
+
+	vLogAction("VCore Initialized", "VCore is ready for use.");
 }
 
 /* checks whether the core has been initialized				*/

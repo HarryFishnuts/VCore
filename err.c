@@ -40,12 +40,17 @@ static void verrAddActionToBuffer(vEnumActionType type, const char* action,
 	/* CRITICAL SECT ENTER */ verrCaptureBufferRWPermission();
 
 	/* make action index rollover (circular array) */
-	if (_vcore->actionLog.actionIndex >
+	if (_vcore->actionLog.actionIndex >=
 		MAX_ACTIONS_SAVED_IN_MEMORY) _vcore->actionLog.actionIndex = 0;
 
 	_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].type = type;
 	_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].timeCreated =
 		vCoreGetTime();
+
+	__stosb(&_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].action,
+		0, sizeof(_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].action));
+	__stosb(&_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].remark,
+		0, sizeof(_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].remark));
 
 	/* copy strings to buffer */
 	__movsb(&_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].action,
@@ -70,6 +75,8 @@ VAPI void _vErrInit(const char* logFileName)
 
 VAPI void _vErrTerminate(void)
 {
+	vLogAction("Error Module Terminating", "LogBuffer will be flushed and no logging"
+		" will be possible until the module is re-initialized.");
 	vDumpLogBuffer();
 
 	DeleteCriticalSection(&_vcore->actionLog.rwPermission);
@@ -109,7 +116,7 @@ VAPI void vLogError(const char* error, const char* remarks)
 static OVERLAPPED __overlapped = { 0 };
 VAPI void vDumpLogBuffer(void)
 {
-	vLogAction("LogBuffer Dump", "_vcore->actionLog is being written to disk");
+	vLogAction("LogBuffer Dump", "ActionLog is being written to disk");
 
 	/* CRITICAL SECT ENTER */ verrCaptureBufferRWPermission();
 

@@ -22,8 +22,7 @@ VAPI void _vBufferTerminate(void);
 /* creates a buffer behavior for buffer objects to adhere	*/
 /* to. buffer behaviors cannot be destroyed.				*/
 VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
-	vI32 elementCount, vBOOL threadSafe, vBOOL lockPerElement,
-	vBOOL zeroElements, vPFBUFFINITIALIZER elementInitCallback,
+	vI32 elementCount, vPFBUFFINITIALIZER elementInitCallback,
 	vPFBUFFDESTRUCTOR  elementDestroyCallback);
 
 /* creates a buffer object to holds things within.			 */
@@ -57,8 +56,10 @@ VAPI void vBufferOperate(vHNDL buffer, vI32 index, vPFBUFFOPERATION operation);
 VAPI void vBufferRemoveIndex(vHNDL buffer, vI32 index);
 
 /* loops through every element and performs the specified	*/
-/* operation on it. buffer may be synced depending on bhv	*/
+/* operation on it.											*/
 VAPI void vBufferIterate(vHNDL buffer, vPFBUFFITERATOR operation);
 
+/* returns whether a given index is marked as used.			*/
+VAPI vBOOL vBufferIsIndexInUse(vHNDL buffer, vI32 index);
 
 #endif
