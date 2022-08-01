@@ -36,9 +36,40 @@ static inline vI32 vbuffFindFreeBufferObject(void)
 	vCoreCreateFatalError("Buffer Objects Full");
 }
 
+static inline void vbuffMapIndexToField(vI32 index, vPI32 chunk, vPI32 bit)
+{
+	*chunk	= (index << 0x06);
+	*bit	= (index &  0x3F);
+}
+
+static inline vI32 vbuffMapFieldToIndex(vI32 chunk, vI32 bit)
+{
+	return (chunk * 0x40) + bit - 1;
+}
+
+static inline void vbuffSetBitField(vPUI64 field, vI32 index, vBOOL value)
+{
+	vI32 chunk, bit;
+	vbuffMapIndexToField(index, &chunk, &bit);
+	if (value)
+		_bittestandset64(&field[chunk], bit);
+	else
+		_bittestandreset64(&field[chunk], bit);
+}
+
+/* NOTE: THIS FUNCTION WILL MARK THE FOUND SPOT AS TAKEN */
 static inline vI32 vbuffFindFreeBufferObjectSpot(vPBufferObject object)
 {
-	
+	int startChunk = object->usedElementCount >> 0x07;
+	for (int i = startChunk; i < object->behavior->fieldChunkCount; i++)
+	{
+		for (int j = 0; j < 0x40; j++)
+		{
+			if (_bittest64(&object->field[i], j)) continue;
+			_bittestandset64(&object->field[i], j); /* SET FIELD TO TRUE */
+			return vbuffMapFieldToIndex(i, j);
+		}
+	}
 }
 
 
@@ -60,7 +91,7 @@ VAPI void _vBufferTerminate(void)
 /* creates a buffer behavior for buffer objects to adhere	*/
 /* to. buffer behaviors cannot be destroyed.				*/
 VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
-	vI32 bufferSize, vBOOL threadSafe, vBOOL lockPerElement,
+	vI32 elementCount, vBOOL threadSafe, vBOOL lockPerElement,
 	vBOOL zeroElements, vPFBUFFINITIALIZER elementInitCallback,
 	vPFBUFFDESTRUCTOR  elementDestroyCallback)
 {
@@ -75,8 +106,9 @@ VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
 	__movsb(bhvPtr->name, name, strlen(name));
 	bhvPtr->initializer = elementInitCallback;
 	bhvPtr->destructor  = elementDestroyCallback;
-	bhvPtr->elementSize = elementSize;
-	bhvPtr->bufferSize  = bufferSize;
+	bhvPtr->elementSizeBytes = elementSize;
+	bhvPtr->elementCount  = elementCount;
+	bhvPtr->fieldChunkCount	= (elementCount >> 0x06) + 1;
 
 	/* set flags */
 	if (threadSafe)		_bittestandset(&bhvPtr->flags, 0);
@@ -86,7 +118,7 @@ VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
 	/* log creation */
 	sprintf_s(__remarkBuffer, sizeof(__remarkBuffer), "NAME: %s\nINDEX: %d\nSIZE: %d\n"
 		"LENGTH: %d\nTHREADSAFE: %d\n", bhvPtr->name, _vcore->bufferHandler.behaviorCount,
-		(vI32)elementSize, bufferSize, _bittest(&bhvPtr->flags, 0));
+		(vI32)elementSize, elementCount, _bittest(&bhvPtr->flags, 0));
 	vLogAction("Created Buffer Behavior", __remarkBuffer);
 
 	_vcore->bufferHandler.behaviorCount++; /* INCREMENT BUFFERBHV COUNT */
@@ -112,9 +144,8 @@ VAPI vHNDL vCreateBuffer(const char* name, vHNDL behavior)
 	__movsb(buff->name, name, strlen(name));
 
 	/* allocate field and data members */
-	vI32 fieldSize = (bhv->bufferSize >> 0x6) + 1;
-	buff->field = vAllocZeroed(sizeof(vUI64) * fieldSize);
-	buff->data  = vAllocZeroed(bhv->elementSize * bhv->bufferSize);
+	buff->field = vAllocZeroed(bhv->fieldChunkCount);
+	buff->data  = vAllocZeroed(bhv->elementSizeBytes * bhv->elementCount);
 	buff->behavior = bhv;
 
 	/* initialize buffer rw mutex */
@@ -169,7 +200,21 @@ VAPI vBOOL vDestroyBuffer(vHNDL bufferHndl)
 /* finds an empty spot in the buffer and returns the		*/
 /* pointer to that element for the user to store or modify  */
 /* NOT TO BE USED WHEN MULTITHREADING!!						*/
-VAPI vPTR vBufferAdd(vHNDL buffer);
+VAPI vPTR vBufferAdd(vHNDL buffer)
+{
+	vPBufferObject buff = _vcore->bufferHandler.buffers[buffer];
+	if (buff == NULL) 
+	{
+		vLogWarning("Invalid Buffer Operation", "Tried to add to a buffer that doesn't exist.");
+		return NULL;
+	}
+
+	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
+	vI32 buffIndex = vbuffFindFreeBufferObjectSpot(buff);
+	/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
+
+	return buff->data + (buffIndex * buff->behavior->elementSizeBytes);
+}
 
 /* finds an empty spot in the buffer and then performs the	*/
 /* operation specified (if any) to the element.				*/

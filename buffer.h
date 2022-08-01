@@ -22,7 +22,7 @@ VAPI void _vBufferTerminate(void);
 /* creates a buffer behavior for buffer objects to adhere	*/
 /* to. buffer behaviors cannot be destroyed.				*/
 VAPI vHNDL vCreateBufferBehavior(const char* name, SIZE_T elementSize,
-	vI32 bufferSize, vBOOL threadSafe, vBOOL lockPerElement,
+	vI32 elementCount, vBOOL threadSafe, vBOOL lockPerElement,
 	vBOOL zeroElements, vPFBUFFINITIALIZER elementInitCallback,
 	vPFBUFFDESTRUCTOR  elementDestroyCallback);
 

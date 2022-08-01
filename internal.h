@@ -131,8 +131,9 @@ typedef struct vBufferBehavior
 
 	vPFBUFFINITIALIZER	initializer;
 	vPFBUFFDESTRUCTOR   destructor;
-	SIZE_T				elementSize;
-	vI32				bufferSize;
+	SIZE_T				elementSizeBytes;
+	vI32				elementCount;
+	vI32				fieldChunkCount;
 
 	/* each bit corresponds to a behavior		*/
 	/* bit 0 -> is buffer threadsafe?			*/
