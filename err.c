@@ -14,6 +14,14 @@ static void verrFileWriteCompletionCallback(DWORD dwErrorCode,
 	if (dwErrorCode) vCoreCreateFatalError("File Write Failed");
 }
 
+static void verrDumpActionLogIfReachedTimeThresh(void)
+{
+	/* only exec if time thresh has passed */
+	if ((vCoreGetTime() - _vcore->actionLog.lastDump) >> 0xA <
+		ACTION_LOG_DUMP_INTERVAL_SECS) return;
+	vDumpLogBuffer();
+}
+
 /* ========== INTERNAL FUNCTIONS				==========	*/
 static void verrCaptureBufferRWPermission(void)
 {
@@ -82,6 +90,7 @@ VAPI void _vErrTerminate(void)
 VAPI void vLogAction(const char* action, const char* remarks)
 {
 	verrAddActionToBuffer(vActionType_ACTION, action, remarks);
+	verrDumpActionLogIfReachedTimeThresh();
 }
 
 /* logs an unexpected issue which may cause issues later in */
@@ -89,6 +98,7 @@ VAPI void vLogAction(const char* action, const char* remarks)
 VAPI void vLogWarning(const char* warning, const char* remarks)
 {
 	verrAddActionToBuffer(vActionType_WARNING, warning, remarks);
+	verrDumpActionLogIfReachedTimeThresh();
 }
 
 /* logs an error which is expected to end the process.		*/
@@ -106,9 +116,10 @@ VAPI void vLogError(const char* error, const char* remarks)
 static OVERLAPPED __overlapped = { 0 };
 VAPI void vDumpLogBuffer(void)
 {
-	vLogAction("LogBuffer Dump", "ActionLog is being written to disk");
-
 	/* CRITICAL SECT ENTER */ verrCaptureBufferRWPermission();
+
+	verrAddActionToBuffer(vActionType_ACTION, "Dumping Log Buffer",
+		"ActionLog is being written to disk");
 
 	HANDLE fHandle = CreateFileA(_vcore->actionLog.actionWriteFileName, 
 		GENERIC_READ | GENERIC_WRITE, NO_FLAGS, NULL, CREATE_ALWAYS, 

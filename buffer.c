@@ -297,6 +297,11 @@ VAPI vPTR vBufferGet(vHNDL buffer, vI32 index)
 		vLogWarning("Buffer Get Failed", "Tried to get from a buffer that doesn't exist.");
 		return NULL;
 	}
+	if (index >= buff->behavior->elementCount || index < 0)
+	{
+		vLogWarning("Buffer Get Failed", "Invalid Index.");
+		return NULL;
+	}
 
 	return buff->data + (index * buff->behavior->elementSizeBytes);
 }
@@ -316,7 +321,7 @@ VAPI void vBufferOperate(vHNDL buffer, vI32 index, vPFBUFFOPERATION operation)
 		vLogWarning("Buffer Operate Failed", "No operation specified.");
 		return;
 	}
-	if (index > buff->behavior->elementCount)
+	if (index > buff->behavior->elementCount || index < 0)
 	{
 		vLogWarning("Buffer Operate Failed", "Invalid Index.");
 		return;
@@ -348,7 +353,7 @@ VAPI void vBufferRemoveIndex(vHNDL buffer, vI32 index)
 		vLogWarning("Buffer Remove Failed", "Tried to remove from a buffer that doesn't exist.");
 		return;
 	}
-	if (index >= buff->behavior->elementCount)
+	if (index >= buff->behavior->elementCount || index < 0)
 	{
 		vLogWarning("Buffer Remove Failed", "Tried to remove an invalid index.");
 		return;
@@ -415,7 +420,12 @@ VAPI vBOOL vBufferIsIndexInUse(vHNDL buffer, vI32 index)
 	if (buff == NULL)
 	{
 		vLogWarning("Buffer Is Index In Use Failed", "Tried to check a buffer that doesn't exist.");
-		return;
+		return FALSE;
+	}
+	if (index >= buff->behavior->elementCount || index < 0)
+	{
+		vLogWarning("Buffer Is Index In Use Failed", "Invalid Index.");
+		return FALSE;
 	}
 
 	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
