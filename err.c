@@ -125,13 +125,16 @@ VAPI void vDumpLogBuffer(void)
 	verrAddActionToBuffer(vActionType_ACTION, "Dumping Log Buffer",
 		"ActionLog is being written to disk");
 
+	/* get file handle */
 	HANDLE fHandle = CreateFileA(_vcore->actionLog.actionWriteFileName, 
 		GENERIC_READ | GENERIC_WRITE, NO_FLAGS, NULL, CREATE_ALWAYS, 
 		FILE_ATTRIBUTE_NORMAL, NULL);
 	if (fHandle == NO_HANDLE) vCoreCreateFatalError("Could Not Open File");
 
+	/* update last dump time */
 	_vcore->actionLog.lastDump = vCoreGetTime();
 
+	/* write to file asyncronously */
 	BOOL wResult = WriteFileEx(fHandle, &_vcore->actionLog, sizeof(_vcore->actionLog),
 		&__overlapped, verrFileWriteCompletionCallback);
 	if (!wResult) vCoreCreateFatalError("File Write Failed");

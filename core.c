@@ -13,7 +13,7 @@
 /* initializes library object and all other modules			*/
 VAPI vBOOL vCoreInitialize(void)
 {
-	if (_vcore) return FALSE;
+	if (_vcore != NULL) return FALSE;
 	
 	_vMemInit(); /* allow for memory management */
 	_vcore = vAllocZeroed(sizeof(vCoreLibrary));
