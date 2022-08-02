@@ -7,6 +7,7 @@
 #ifndef _VCORE_INTERNAL_INCLUDE_
 #define _VCORE_INTERNAL_INCLUDE_
 
+
 /* ========== PREPROCESSOR DEFINITIONS			========== */
 #define _CRT_SECURE_NO_WARNINGS
 #define WIN32_LEAN_AND_MEAN
@@ -75,6 +76,8 @@ typedef uint8_t		vBYTE;
 typedef uint8_t		vBOOL;
 typedef vUI32		vHNDL;
 typedef vUI64		vTIME;
+typedef float		vF32;
+typedef double		vF64;
 
 /* buffer callbacks										   */
 typedef void (*vPFBUFFITERATOR)   (vHNDL buffer, vI32 index, vPTR element);
@@ -125,8 +128,8 @@ typedef struct vBufferBehavior
 	vPFBUFFINITIALIZER	initializer;
 	vPFBUFFDESTRUCTOR   destructor;
 	SIZE_T				elementSizeBytes;
-	vI32				elementCount;
-	vI32				fieldChunkCount;
+	vUI32				elementCount;
+	vUI32				fieldChunkCount;
 
 } vBufferBehavior, *vPBufferBehavior;
 
@@ -136,18 +139,32 @@ typedef struct vBufferObject
 	CRITICAL_SECTION rwPermission;
 
 	char name[BUFF_TINY];
-	vI32 usedElementCount;
+	vUI32 usedElementCount;
 
 	vPUI64 field;	/* element useage bitfield	*/
 	vPUI8  data;	/* pointer to element data	*/
 } vBufferObject, *vPBufferObject;
 
+typedef struct vBufferInfo
+{
+	const char* bufferName;		/* ptr to buffer name	*/
+	const char* behaviorName;	/* ptr to behavior name	*/
+
+	vUI32  elementsUsed;
+	vUI32  elementsAvailable;
+
+	vUI32  elementCount;
+	SIZE_T elementSize;
+
+	vF32 percentUsed;
+} vBufferInfo, *vPBufferInfo;
+
 typedef struct vBufferHandler
 {
 	CRITICAL_SECTION rwPermission;
 
-	vI32 behaviorCount;
-	vI32 bufferCount;
+	vUI32 behaviorCount;
+	vUI32 bufferCount;
 
 	vBufferBehavior behaviors[MAX_BUFFER_BEHAVIORS];
 	vPBufferObject	buffers[MAX_BUFFER_OBJECTS];

@@ -36,7 +36,7 @@ VAPI vBOOL vDestroyBuffer(vHNDL bufferHndl);
 
 /* finds an empty spot in the buffer and returns the		*/
 /* pointer to that element for the user to store or modify  */
-/* NOT TO BE USED WHEN MULTITHREADING!!						*/
+/* NOT TO BE USED OUTSIDE OF BUFFER OPERATIONS				*/
 VAPI vPTR vBufferAdd(vHNDL buffer);
 
 /* finds an empty spot in the buffer and then performs the	*/
@@ -44,7 +44,7 @@ VAPI vPTR vBufferAdd(vHNDL buffer);
 VAPI void vBufferAddSafe(vHNDL buffer, vPFBUFFOPERATION operation);
 
 /* returns a pointer to an element in the buffer specified  */
-/* by an index. NOT TO BE USED WHEN MULTITHREADING!!		*/
+/* by an index. NOT TO BE USED OUTSIDE OF BUFFER OPERATIONS */
 VAPI vPTR vBufferGet(vHNDL buffer, vI32 index);
 
 /* finds the element in the buffer specified by an index    */
@@ -61,5 +61,8 @@ VAPI void vBufferIterate(vHNDL buffer, vPFBUFFITERATOR operation);
 
 /* returns whether a given index is marked as used.			*/
 VAPI vBOOL vBufferIsIndexInUse(vHNDL buffer, vI32 index);
+
+/* populates a struct with info regarding it's internals	*/
+VAPI void vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut);
 
 #endif

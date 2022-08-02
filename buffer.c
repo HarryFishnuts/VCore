@@ -67,15 +67,15 @@ static inline void vbuffCreateBufferFullMsg(vPBufferObject object)
 }
 
 /* NOTE: THIS FUNCTION WILL MARK THE FOUND SPOT AS TAKEN */
-static inline vI32 vbuffFindFreeBufferObjectSpot(vPBufferObject object)
+static inline vUI32 vbuffFindFreeBufferObjectSpot(vPBufferObject object)
 {
 	if (object->usedElementCount >= object->behavior->elementCount)
 		vbuffCreateBufferFullMsg(object);
 
-	int startChunk = object->usedElementCount >> 0x07;
-	for (int i = startChunk; i < object->behavior->fieldChunkCount; i++)
+	vUI32 startChunk = object->usedElementCount >> 0x07;
+	for (vUI32 i = startChunk; i < object->behavior->fieldChunkCount; i++)
 	{
-		for (int j = 0; j < 0x40; j++)
+		for (vUI32 j = 0; j < 0x40; j++)
 		{
 			if (_bittest64(&object->field[i], j)) continue;
 			_bittestandset64(&object->field[i], j); /* SET FIELD TO TRUE */
@@ -237,7 +237,7 @@ VAPI vPTR vBufferAdd(vHNDL buffer)
 
 	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
 
-	vI32 buffIndex = vbuffFindFreeBufferObjectSpot(buff);
+	vUI32 buffIndex = vbuffFindFreeBufferObjectSpot(buff);
 
 	/* clear element */
 	vPTR elemPtr = buff->data + (buffIndex * buff->behavior->elementSizeBytes);
@@ -271,7 +271,7 @@ VAPI void vBufferAddSafe(vHNDL buffer, vPFBUFFOPERATION operation)
 
 	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
 
-	vI32 buffIndex = vbuffFindFreeBufferObjectSpot(buff);
+	vUI32 buffIndex = vbuffFindFreeBufferObjectSpot(buff);
 
 	/* clear element */
 	vPTR elemPtr = buff->data + (buffIndex * buff->behavior->elementSizeBytes);
@@ -362,14 +362,16 @@ VAPI void vBufferRemoveIndex(vHNDL buffer, vI32 index)
 	vI32 chunk, bit;
 	vbuffMapIndexToField(index, &chunk, &bit);
 
+	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
+
 	/* check for already removed */
 	if (_bittest64(&buff->field[chunk], bit) == FALSE)
 	{
 		vLogWarning("Buffer Remove Failed", "Tried to remove an inactive element.");
+		
+		/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 		return;
 	}
-
-	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
 
 	/* apply destructor if any */
 	if (buff->behavior->destructor)
@@ -405,7 +407,11 @@ VAPI void vBufferIterate(vHNDL buffer, vPFBUFFITERATOR operation)
 
 		/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
 
-		if (_bittest64(&buff->field[chunk], bit) == ZERO) continue;
+		if (_bittest64(&buff->field[chunk], bit) == ZERO) 
+		{
+			/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
+			continue;
+		}
 
 		operation(buffer, i, buff->data + (i * buff->behavior->elementSizeBytes));
 
@@ -437,4 +443,32 @@ VAPI vBOOL vBufferIsIndexInUse(vHNDL buffer, vI32 index)
 	/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 
 	return result;
+}
+
+/* populates a struct with info regarding it's internals	*/
+VAPI void vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut)
+{
+	vPBufferObject buff = _vcore->bufferHandler.buffers[buffer];
+	if (buff == NULL)
+	{
+		vLogWarning("Buffer Get Info Failed", "Tried to check a buffer that doesn't exist.");
+		return;
+	}
+
+	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
+
+	__stosb(infoOut, 0, sizeof(vBufferInfo));
+
+	infoOut->bufferName		= buff->name;
+	infoOut->behaviorName	= buff->behavior->name;
+
+	infoOut->elementCount	= buff->behavior->elementCount;
+	infoOut->elementSize	= buff->behavior->elementSizeBytes;
+
+	infoOut->elementsUsed	= buff->usedElementCount;
+	infoOut->elementsAvailable = infoOut->elementCount - infoOut->elementsUsed;
+
+	infoOut->percentUsed = (vF32)infoOut->elementsUsed / (vF32)infoOut->elementCount;
+
+	/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 }

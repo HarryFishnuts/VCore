@@ -19,6 +19,8 @@ static void verrDumpActionLogIfReachedTimeThresh(void)
 	/* only exec if time thresh has passed */
 	if ((vCoreGetTime() - _vcore->actionLog.lastDump) >> 0xA <
 		ACTION_LOG_DUMP_INTERVAL_SECS) return;
+
+	Beep(450, 500);
 	vDumpLogBuffer();
 }
 
@@ -42,10 +44,12 @@ static void verrAddActionToBuffer(vEnumActionType type, const char* action,
 	if (_vcore->actionLog.actionIndex >=
 		MAX_ACTIONS_SAVED_IN_MEMORY) _vcore->actionLog.actionIndex = 0;
 
+	/* assign "metadata" */
 	_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].type = type;
 	_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].timeCreated =
 		vCoreGetTime();
 
+	/* zero memory */
 	__stosb(&_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].action,
 		0, sizeof(_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].action));
 	__stosb(&_vcore->actionLog.actionLog[_vcore->actionLog.actionIndex].remark,
@@ -68,6 +72,7 @@ static void verrAddActionToBuffer(vEnumActionType type, const char* action,
 VAPI void _vErrInit(const char* logFileName)
 {
 	__movsb(&_vcore->actionLog.actionWriteFileName, logFileName, strlen(logFileName));
+	DeleteFileA(_vcore->actionLog.actionWriteFileName);
 
 	InitializeCriticalSection(&_vcore->actionLog.rwPermission);
 }

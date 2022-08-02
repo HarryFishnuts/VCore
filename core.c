@@ -15,10 +15,11 @@ VAPI vBOOL vCoreInitialize(void)
 {
 	if (_vcore) return FALSE;
 	
-	_vMemInit();
+	_vMemInit(); /* allow for memory management */
 	_vcore = vAllocZeroed(sizeof(vCoreLibrary));
-	_vErrInit("logfile.txt");
-	_vBufferInit();
+	
+	_vErrInit("logfile.txt");	/* allow for error logging			*/
+	_vBufferInit();				/* allow for threadsafe buffering	*/
 
 	_vcore->initializeTime = GetTickCount64();
 
@@ -35,10 +36,11 @@ VAPI vBOOL vCoreIsInitialized(void)
 VAPI vBOOL vCoreTerminate(void)
 {
 	if (!_vcore) return FALSE;
-	_vBufferTerminate();
-	_vErrTerminate();
+	_vBufferTerminate();	/* disable buffering systems */
+	_vErrTerminate();		/* disable logging			 */
+	
 	vFree(_vcore);
-	_vMemTerminate();
+	_vMemTerminate();		/* free all memory			 */
 	return TRUE;
 }
 
