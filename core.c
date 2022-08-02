@@ -41,6 +41,9 @@ VAPI vBOOL vCoreTerminate(void)
 	
 	vFree(_vcore);
 	_vMemTerminate();		/* free all memory			 */
+
+	_vcore = NULL;
+
 	return TRUE;
 }
 

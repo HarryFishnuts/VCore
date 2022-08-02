@@ -20,7 +20,6 @@ static void verrDumpActionLogIfReachedTimeThresh(void)
 	if ((vCoreGetTime() - _vcore->actionLog.lastDump) >> 0xA <
 		ACTION_LOG_DUMP_INTERVAL_SECS) return;
 
-	Beep(450, 500);
 	vDumpLogBuffer();
 }
 
