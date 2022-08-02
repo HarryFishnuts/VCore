@@ -14,15 +14,6 @@ static void verrFileWriteCompletionCallback(DWORD dwErrorCode,
 	if (dwErrorCode) vCoreCreateFatalError("File Write Failed");
 }
 
-static void verrDumpIfTimeThreshPassed(void)
-{
-	/* take time diff in msecs and the shr by 10. (div by 1024) */
-	/* this gives and approximate number of seconds since the	*/
-	/* last log dump, and is compared against the dump interval */
-	if (((vCoreGetTime() - _vcore->actionLog.lastDump) >> 0xA) >
-		ACTION_LOG_DUMP_INTERVAL_SEC) vDumpLogBuffer();
-}
-
 /* ========== INTERNAL FUNCTIONS				==========	*/
 static void verrCaptureBufferRWPermission(void)
 {
@@ -61,7 +52,7 @@ static void verrAddActionToBuffer(vEnumActionType type, const char* action,
 	/* increment action index */
 	_vcore->actionLog.actionIndex++;
 
-	/* CRITICAL SECT LEAVE */verrRelaseBufferRWPermission();
+	/* CRITICAL SECT LEAVE */ verrRelaseBufferRWPermission();
 }
 
 /* ========== INITIALIZATION FUNCTIONS			==========	*/
@@ -79,6 +70,7 @@ VAPI void _vErrTerminate(void)
 		" will be possible until the module is re-initialized.");
 	vDumpLogBuffer();
 
+	EnterCriticalSection(&_vcore->actionLog.rwPermission);
 	DeleteCriticalSection(&_vcore->actionLog.rwPermission);
 }
 
@@ -90,7 +82,6 @@ VAPI void _vErrTerminate(void)
 VAPI void vLogAction(const char* action, const char* remarks)
 {
 	verrAddActionToBuffer(vActionType_ACTION, action, remarks);
-	verrDumpIfTimeThreshPassed();
 }
 
 /* logs an unexpected issue which may cause issues later in */
@@ -98,7 +89,6 @@ VAPI void vLogAction(const char* action, const char* remarks)
 VAPI void vLogWarning(const char* warning, const char* remarks)
 {
 	verrAddActionToBuffer(vActionType_WARNING, warning, remarks);
-	verrDumpIfTimeThreshPassed();
 }
 
 /* logs an error which is expected to end the process.		*/

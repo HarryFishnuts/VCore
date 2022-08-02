@@ -30,7 +30,7 @@
 
 #define MAX_MEMORY_ALLOCATEABLE			0x100000L
 #define MAX_ACTIONS_SAVED_IN_MEMORY		0x80
-#define ACTION_LOG_DUMP_INTERVAL_SEC	0x20
+#define BUFFER_MEMORY_PADDING_BYTES		0x10L
 
 #define MAX_BUFFER_BEHAVIORS	0x40
 #define MAX_BUFFER_OBJECTS		0x200
@@ -76,10 +76,10 @@ typedef vUI32		vHNDL;
 typedef vUI64		vTIME;
 
 /* buffer callbacks										   */
-typedef void (*vPFBUFFITERATOR)   (vI32 index, vPTR element);
-typedef void (*vPFBUFFINITIALIZER)(vI32 index, vPTR element);
-typedef void (*vPFBUFFDESTRUCTOR) (vI32 index, vPTR element);
-typedef void (*vPFBUFFOPERATION)  (vI32 index, vPTR element);
+typedef void (*vPFBUFFITERATOR)   (vHNDL buffer, vI32 index, vPTR element);
+typedef void (*vPFBUFFINITIALIZER)(vHNDL buffer, vI32 index, vPTR element);
+typedef void (*vPFBUFFDESTRUCTOR) (vHNDL buffer, vI32 index, vPTR element);
+typedef void (*vPFBUFFOPERATION)  (vHNDL buffer, vI32 index, vPTR element);
 
 
 /* ========== ENUMERATIONS						========== */
@@ -92,14 +92,6 @@ typedef enum vEnumActionType
 	vActionType_WARNING		= 2,
 	vActionType_ERROR		= 3
 } vEnumActionType;
-
-/* buffering status enumeration							   */
-typedef enum vEnumBufferStatus
-{
-	vBufferStatus_SUCESS		= 0,
-	vBufferStatus_OUTOFSPACE	= 1,
-} vEnumBufferStatus;
-
 
 
 /* ========== ACTION AND LOGGING STRUCTURES		========== */
@@ -145,8 +137,8 @@ typedef struct vBufferObject
 	char name[BUFF_TINY];
 	vI32 usedElementCount;
 
-	vPUI64 field;
-	vPUI8  data;
+	vPUI64 field;	/* element useage bitfield	*/
+	vPUI8  data;	/* pointer to element data	*/
 } vBufferObject, *vPBufferObject;
 
 typedef struct vBufferHandler

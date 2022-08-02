@@ -38,7 +38,7 @@ static inline vI32 vbuffFindFreeBufferObject(void)
 
 static inline void vbuffMapIndexToField(vI32 index, vPI32 chunk, vPI32 bit)
 {
-	*chunk	= (index << 0x06);
+	*chunk	= (index >> 0x06);
 	*bit	= (index &  0x3F);
 }
 
@@ -154,7 +154,8 @@ VAPI vHNDL vCreateBuffer(const char* name, vHNDL behavior)
 
 	/* allocate field and data members */
 	buff->field = vAllocZeroed(sizeof(vUI64) * bhv->fieldChunkCount);
-	buff->data  = vAllocZeroed(bhv->elementSizeBytes * bhv->elementCount);
+	buff->data  = vAllocZeroed((bhv->elementSizeBytes * bhv->elementCount) + 
+		BUFFER_MEMORY_PADDING_BYTES);
 	buff->behavior = bhv;
 
 	/* initialize buffer rw mutex */
@@ -199,7 +200,8 @@ VAPI vBOOL vDestroyBuffer(vHNDL bufferHndl)
 			/* if already destroyed, continue */
 			if (_bittest64(&buff->field[chunk], bit) == ZERO) continue;
 
-			buff->behavior->destructor(i, buff->data + (i * buff->behavior->elementSizeBytes));
+			buff->behavior->destructor(bufferHndl, i, 
+				buff->data + (i * buff->behavior->elementSizeBytes));
 		}
 	}
 
@@ -244,7 +246,7 @@ VAPI vPTR vBufferAdd(vHNDL buffer)
 	buff->usedElementCount++; /* increment used elem count */
 	
 	if (buff->behavior->initializer) /* invoke initializer */
-		buff->behavior->initializer(buffIndex, elemPtr);
+		buff->behavior->initializer(buffer, buffIndex, elemPtr);
 
 	/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 
@@ -278,9 +280,9 @@ VAPI void vBufferAddSafe(vHNDL buffer, vPFBUFFOPERATION operation)
 	buff->usedElementCount++; /* increment used elem count */
 
 	if (buff->behavior->initializer) /* invoke initializer first */
-		buff->behavior->initializer(buffIndex, elemPtr);
+		buff->behavior->initializer(buffer, buffIndex, elemPtr);
 
-	operation(buffIndex, elemPtr);   /* apply operation next */
+	operation(buffer, buffIndex, elemPtr);   /* apply operation next */
 
 	/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 }
@@ -307,18 +309,32 @@ VAPI void vBufferOperate(vHNDL buffer, vI32 index, vPFBUFFOPERATION operation)
 	if (buff == NULL)
 	{
 		vLogWarning("Buffer Operate Failed", "Tried to get from a buffer that doesn't exist.");
-		return NULL;
+		return;
 	}
 	if (operation == NULL)
 	{
 		vLogWarning("Buffer Operate Failed", "No operation specified.");
-		return NULL;
+		return;
+	}
+	if (index > buff->behavior->elementCount)
+	{
+		vLogWarning("Buffer Operate Failed", "Invalid Index.");
+		return;
+	}
+
+	/* check for not active */
+	vI32 chunk, bit;
+	vbuffMapIndexToField(index, &chunk, &bit);
+	if (_bittest64(&buff->field[chunk], bit) == FALSE)
+	{
+		vLogWarning("Buffer Operate Failed", "Inactive element");
+		return;
 	}
 
 	vPTR elemPtr = buff->data + (index * buff->behavior->elementSizeBytes);
 
 	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
-	operation(index, elemPtr);
+	operation(buffer, index, elemPtr);
 	/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 }
 
@@ -332,15 +348,28 @@ VAPI void vBufferRemoveIndex(vHNDL buffer, vI32 index)
 		vLogWarning("Buffer Remove Failed", "Tried to remove from a buffer that doesn't exist.");
 		return;
 	}
+	if (index >= buff->behavior->elementCount)
+	{
+		vLogWarning("Buffer Remove Failed", "Tried to remove an invalid index.");
+		return;
+	}
 
 	vI32 chunk, bit;
 	vbuffMapIndexToField(index, &chunk, &bit);
+
+	/* check for already removed */
+	if (_bittest64(&buff->field[chunk], bit) == FALSE)
+	{
+		vLogWarning("Buffer Remove Failed", "Tried to remove an inactive element.");
+		return;
+	}
 
 	/* CRITICAL SECT ENTER */ EnterCriticalSection(&buff->rwPermission);
 
 	/* apply destructor if any */
 	if (buff->behavior->destructor)
-		buff->behavior->destructor(index, buff->data + (index * buff->behavior->elementSizeBytes));
+		buff->behavior->destructor(buffer, index, 
+			buff->data + (index * buff->behavior->elementSizeBytes));
 
 	_bittestandreset64(&buff->field[chunk], bit);
 	buff->usedElementCount--;
@@ -364,12 +393,8 @@ VAPI void vBufferIterate(vHNDL buffer, vPFBUFFITERATOR operation)
 		return;
 	}
 
-	int operateCount = 0;
 	for (int i = 0; i < buff->behavior->elementCount; i++)
 	{
-		/* on operated on all, break */
-		if (operateCount >= buff->usedElementCount) break;
-
 		vI32 chunk, bit;
 		vbuffMapIndexToField(i, &chunk, &bit);
 
@@ -377,8 +402,7 @@ VAPI void vBufferIterate(vHNDL buffer, vPFBUFFITERATOR operation)
 
 		if (_bittest64(&buff->field[chunk], bit) == ZERO) continue;
 
-		operation(i, buff->data + (i * buff->behavior->elementSizeBytes));
-		operateCount++;
+		operation(buffer, i, buff->data + (i * buff->behavior->elementSizeBytes));
 
 		/* CRITICAL SECT LEAVE */ LeaveCriticalSection(&buff->rwPermission);
 	}
