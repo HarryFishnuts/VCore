@@ -18,6 +18,17 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="vcore.h" />
+    <ClInclude Include="vcorefunctions.h" />
+    <ClInclude Include="vdefs.h" />
+    <ClInclude Include="ventries.h" />
+    <ClInclude Include="vstructs.h" />
+    <ClInclude Include="vtypes.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="vcorefunctions.c" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -152,19 +163,6 @@
       <EnableUAC>false</EnableUAC>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClInclude Include="buffer.h" />
-    <ClInclude Include="core.h" />
-    <ClInclude Include="err.h" />
-    <ClInclude Include="internal.h" />
-    <ClInclude Include="mem.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="buffer.c" />
-    <ClCompile Include="core.c" />
-    <ClCompile Include="err.c" />
-    <ClCompile Include="mem.c" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

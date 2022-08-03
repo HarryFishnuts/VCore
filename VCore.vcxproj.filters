@@ -13,36 +13,42 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Base">
+      <UniqueIdentifier>{0ce0f46d-2855-4709-9352-9fe70e687490}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Core">
+      <UniqueIdentifier>{59155f53-2166-454a-9589-b520d7c63f3b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Core">
+      <UniqueIdentifier>{aad4d396-587c-49ad-a3b7-536cbf7715aa}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Logging">
+      <UniqueIdentifier>{1325fdb7-86f3-4760-9175-40576e044153}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="internal.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vdefs.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="core.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vstructs.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="mem.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vtypes.h">
+      <Filter>Header Files\Base</Filter>
     </ClInclude>
-    <ClInclude Include="err.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vcore.h">
+      <Filter>Header Files\Core</Filter>
     </ClInclude>
-    <ClInclude Include="buffer.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="vcorefunctions.h">
+      <Filter>Header Files\Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ventries.h">
+      <Filter>Header Files\Logging</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="core.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="mem.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="err.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="buffer.c">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="vcorefunctions.c">
+      <Filter>Source Files\Core</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
