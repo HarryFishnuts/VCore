@@ -26,6 +26,7 @@
     <ClInclude Include="ventries.h" />
     <ClInclude Include="ventriesformatted.h" />
     <ClInclude Include="vfileio.h" />
+    <ClInclude Include="vlock.h" />
     <ClInclude Include="vstructs.h" />
     <ClInclude Include="vtypes.h" />
   </ItemGroup>
@@ -35,6 +36,7 @@
     <ClCompile Include="ventries.c" />
     <ClCompile Include="ventriesformatted.c" />
     <ClCompile Include="vfileio.c" />
+    <ClCompile Include="vlock.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

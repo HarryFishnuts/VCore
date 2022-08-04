@@ -89,12 +89,18 @@ VAPI vBOOL vCoreTerminate(void)
 	vLogInfo(__func__, "VCore terminating.");
 	vDumpEntryBuffer();
 
-	/* destroy sync object */
+	/* sync files and core */
 	EnterCriticalSection(&_vcore.rwPermission);
-	DeleteCriticalSection(&_vcore.rwPermission);
-
-	/* destroy file sync object */
 	EnterCriticalSection(&_vcore.fileLock);
+
+	/* remove all locks */
+	for (int i = 0; i < MAX_LOCKS; i++)
+	{
+		vDestroyLock(i);
+	}
+
+	/* destroy sync objects */
+	DeleteCriticalSection(&_vcore.rwPermission);
 	DeleteCriticalSection(&_vcore.fileLock);
 
 	/* destroy heap */

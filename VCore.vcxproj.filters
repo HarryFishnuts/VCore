@@ -40,6 +40,12 @@
     <Filter Include="Source Files\Files">
       <UniqueIdentifier>{ab82210f-ae97-420a-bc21-c90fdd524e4a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Locking">
+      <UniqueIdentifier>{3b5ec65a-1e4d-49a5-ad40-ba4d88fd27bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Locking">
+      <UniqueIdentifier>{2080359b-81c0-4642-9333-ab6d06873258}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -69,6 +75,9 @@
     <ClInclude Include="vfileio.h">
       <Filter>Header Files\Files</Filter>
     </ClInclude>
+    <ClInclude Include="vlock.h">
+      <Filter>Header Files\Locking</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vcorefunctions.c">
@@ -85,6 +94,9 @@
     </ClCompile>
     <ClCompile Include="vfileio.c">
       <Filter>Source Files\Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vlock.c">
+      <Filter>Source Files\Locking</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -15,6 +15,7 @@
 #include "ventriesformatted.h"	/* formatted logging functions	*/
 #include "vbuffers.h"			/* buffering functions			*/
 #include "vfileio.h"			/* file manipulation functions	*/
+#include "vlock.h"				/* thread synchronization		*/
 
 
 

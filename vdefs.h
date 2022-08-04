@@ -48,6 +48,8 @@
 
 #define MAX_BUFFERS		0x100
 
+#define MAX_LOCKS		0x40
+
 
 /* ========== ENTRY TYPES						==========	*/
 #define ENTRY_UNUSED	0x00
