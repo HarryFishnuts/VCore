@@ -38,7 +38,7 @@ static __forceinline vUI64 vhMapUseFieldToIndex(vUI64 chunk, vUI64 bit)
 
 static __forceinline vUI16 vhMapPtrToBufferIndex(vPBuffer buffer, vPTR ptr)
 {
-	return ((vPBYTE)ptr - buffer->data) / buffer->elementSize;
+	return ((vPBYTE)ptr - buffer->data) / buffer->elementSizeBytes;
 }
 
 static __forceinline vPBuffer vhGetBufferLocked(vHNDL bufHndl)
@@ -73,9 +73,9 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	/* initialize element related data */
 	InitializeCriticalSection(&buffer->rwPermission);
 	vCoreTime(&buffer->timeCreated);
-	buffer->elementSize = elementSize;
+	buffer->elementSizeBytes = elementSize;
 	buffer->capacity	= capacity;
-	buffer->sizeBytes   = buffer->elementSize * buffer->capacity;
+	buffer->sizeBytes   = buffer->elementSizeBytes * buffer->capacity;
 	buffer->inUse		= TRUE;
 
 	/* allocate memory for field and data */
@@ -87,7 +87,7 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	vLogInfoFormatted(__func__,
 		"Buffer '%s' created with "
 		"element size %d and capacity %d.",
-		buffer->name, buffer->elementSize, buffer->capacity);
+		buffer->name, buffer->elementSizeBytes, buffer->capacity);
 
 	/* UNSYNC	*/ vCoreUnlock();
 
@@ -166,8 +166,8 @@ VAPI vPTR  vBufferAdd(vHNDL buffHndl)
 		buff->elementsUsed++;
 
 		/* get ptr and zero memory */
-		vPTR elemPtr = buff->data + (indexActual * buff->elementSize);
-		vZeroMemory(elemPtr, buff->elementSize);
+		vPTR elemPtr = buff->data + (indexActual * buff->elementSizeBytes);
+		vZeroMemory(elemPtr, buff->elementSizeBytes);
 
 		/* UNSYNC	*/ vBufferUnlock(buffHndl);
 		
@@ -251,7 +251,7 @@ VAPI vPTR  vBufferGetIndex(vHNDL buffer, vUI16 index)
 		return NULL;
 	}
 
-	return buff->data + (index * buff->elementSize);
+	return buff->data + (index * buff->elementSizeBytes);
 }
 
 VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
@@ -274,7 +274,7 @@ VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
 
 		if (_bittest64(&buff->useField[chunk], bit) == FALSE) continue;
 
-		function(buffHndl, i, buff->data + (i * buff->elementSize));
+		function(buffHndl, i, buff->data + (i * buff->elementSizeBytes));
 	}
 
 	/* UNSYNC	*/ vBufferUnlock(buffHndl);
@@ -287,8 +287,8 @@ VAPI void vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut)
 	vPBuffer buff = &_vcore.buffers[buffer];
 
 	infoOut->capacity    = buff->capacity;
-	infoOut->elementSize = buff->elementSize;
-	infoOut->elementUsed = buff->elementsUsed;
+	infoOut->elementSize = buff->elementSizeBytes;
+	infoOut->elementsUsed = buff->elementsUsed;
 	infoOut->sizeBytes   = buff->sizeBytes;
 	infoOut->timeCreated = buff->timeCreated;
 	infoOut->name		 = buff->name;

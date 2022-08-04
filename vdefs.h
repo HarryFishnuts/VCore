@@ -51,7 +51,7 @@
 
 /* ========== ENTRY TYPES						==========	*/
 #define ENTRY_UNUSED	0x00
-#define ENTRY_EVENT		0x01
+#define ENTRY_INFO		0x01
 #define ENTRY_WARNING	0x02
 #define ENTRY_ERROR		0x03
 

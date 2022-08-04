@@ -51,6 +51,9 @@ VAPI vBOOL vCoreInitialize(void)
 	/* initialize sync object */
 	InitializeCriticalSection(&_vcore.rwPermission);
 
+	/* initialize file locking object */
+	InitializeCriticalSection(&_vcore.fileLock);
+
 	/* initialize heap object */
 	_vcore.heap = HeapCreate(NO_FLAGS, HEAP_ALLOCATE_MIN, HEAP_ALLOCATE_MAX);
 	
@@ -89,6 +92,10 @@ VAPI vBOOL vCoreTerminate(void)
 	/* destroy sync object */
 	EnterCriticalSection(&_vcore.rwPermission);
 	DeleteCriticalSection(&_vcore.rwPermission);
+
+	/* destroy file sync object */
+	EnterCriticalSection(&_vcore.fileLock);
+	DeleteCriticalSection(&_vcore.fileLock);
 
 	/* destroy heap */
 	HeapDestroy(_vcore.heap);

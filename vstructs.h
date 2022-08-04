@@ -52,7 +52,7 @@ typedef struct vBuffer
 	vTIME timeCreated;
 	vCHAR name[BUFF_SMALL];
 
-	vUI16 elementSize;				/* size of each element					*/
+	vUI16 elementSizeBytes;			/* size of each element					*/
 	vUI16 capacity;					/* max amount of elements storable		*/
 	vUI32 sizeBytes;				/* data size in bytes					*/
 
@@ -71,7 +71,7 @@ typedef struct vBufferInfo
 	vCHAR* name;
 
 	vTIME timeCreated;
-	vUI16 elementUsed;
+	vUI16 elementsUsed;
 
 	vUI16 elementSize;
 	vUI16 capacity;
@@ -89,6 +89,7 @@ typedef struct vBufferInfo
 typedef struct _vCoreInternals
 {
 	CRITICAL_SECTION rwPermission;		/* synchronization object		*/
+	CRITICAL_SECTION fileLock;			/* file write locking object	*/
 	
 	vBOOL  initialized;					/* checks whether library has	*/
 										/* been initialized				*/

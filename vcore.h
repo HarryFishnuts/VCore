@@ -14,6 +14,7 @@
 #include "ventries.h"			/* logging functions			*/
 #include "ventriesformatted.h"	/* formatted logging functions	*/
 #include "vbuffers.h"			/* buffering functions			*/
+#include "vfileio.h"			/* file manipulation functions	*/
 
 
 

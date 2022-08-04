@@ -124,7 +124,7 @@ static __forceinline void vfAddEntry(vBYTE entryType,
 /* ========== EVENT LOGGING						==========	*/
 VAPI void vLogInfo(const char* funcName, const char* remarks)
 {
-	vfAddEntry(ENTRY_EVENT, funcName, remarks);
+	vfAddEntry(ENTRY_INFO, funcName, remarks);
 }
 
 VAPI void vLogWarning(const char* funcName, const char* remarks)

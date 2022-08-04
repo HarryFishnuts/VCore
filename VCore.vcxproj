@@ -25,6 +25,7 @@
     <ClInclude Include="vdefs.h" />
     <ClInclude Include="ventries.h" />
     <ClInclude Include="ventriesformatted.h" />
+    <ClInclude Include="vfileio.h" />
     <ClInclude Include="vstructs.h" />
     <ClInclude Include="vtypes.h" />
   </ItemGroup>
@@ -33,6 +34,7 @@
     <ClCompile Include="vcorefunctions.c" />
     <ClCompile Include="ventries.c" />
     <ClCompile Include="ventriesformatted.c" />
+    <ClCompile Include="vfileio.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -159,6 +161,11 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <AssemblerOutput>AssemblyAndSourceCode</AssemblerOutput>
       <CompileAs>CompileAsC</CompileAs>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>false</ExceptionHandling>
+      <StructMemberAlignment>8Bytes</StructMemberAlignment>
+      <IntelJCCErratum>true</IntelJCCErratum>
+      <EnableEnhancedInstructionSet>StreamingSIMDExtensions2</EnableEnhancedInstructionSet>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

@@ -34,6 +34,12 @@
     <Filter Include="Source Files\Buffering">
       <UniqueIdentifier>{569257dd-bb45-4052-81d0-0a48b81ebc4e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Files">
+      <UniqueIdentifier>{9de4c17c-9d4e-4fd8-a985-1895b9f7a60b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Files">
+      <UniqueIdentifier>{ab82210f-ae97-420a-bc21-c90fdd524e4a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -60,6 +66,9 @@
     <ClInclude Include="ventriesformatted.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
+    <ClInclude Include="vfileio.h">
+      <Filter>Header Files\Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vcorefunctions.c">
@@ -73,6 +82,9 @@
     </ClCompile>
     <ClCompile Include="ventriesformatted.c">
       <Filter>Source Files\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="vfileio.c">
+      <Filter>Source Files\Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
