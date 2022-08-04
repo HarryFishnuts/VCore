@@ -34,6 +34,9 @@ static __forceinline void vfWriteEntryBufferToFile(const char* filename)
 
 	if (result == ZERO) vCoreFatalError(__func__, "Attempted to write entry buffer to"
 		" a file but failed.");
+
+	/* close file */
+	CloseHandle(fHndl);
 }
 
 static __forceinline void vfEntryWriteRollover(void)
@@ -154,9 +157,15 @@ VAPI vBOOL vReadEntryBuffer(const char* fileName, vPEntryBuffer buffer)
 	if (fHndl == NULL) vCoreFatalError(__func__, "Could not open existing file to "
 		"read from.");
 
+	/* zero buffer */
+	vZeroMemory(buffer, sizeof(vEntryBuffer));
+
 	/* read to buffer */
 	result = ReadFile(fHndl, buffer, sizeof(vEntryBuffer), NULL, NULL);
 	if (result == NULL) vCoreFatalError(__func__, "Could not read from file.");
+
+	/* close file */
+	CloseHandle(fHndl);
 
 	return TRUE;
 }
