@@ -43,9 +43,9 @@ static __forceinline vUI16 vhMapPtrToBufferIndex(vPBuffer buffer, vPTR ptr)
 
 static __forceinline vPBuffer vhGetBufferLocked(vHNDL bufHndl)
 {
-	vCoreLock();
+	/* SYNC		*/ vCoreLock();
 	vPBuffer buff = _vcore.buffers + bufHndl;
-	vCoreUnlock();
+	/* UNSYNC	*/ vCoreUnlock();
 	return buff;
 }
 
@@ -84,7 +84,7 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	buffer->data			= vAllocZeroed(buffer->sizeBytes);
 
 	/* log buffer creation */
-	vLogEventFormatted(__func__,
+	vLogInfoFormatted(__func__,
 		"Buffer '%s' created with "
 		"element size %d and capacity %d.",
 		buffer->name, buffer->elementSize, buffer->capacity);
@@ -118,7 +118,7 @@ VAPI vBOOL vDestroyBuffer(vHNDL buffHndl)
 	buffer->inUse = FALSE;
 
 	/* log buffer deletion */
-	vLogEventFormatted(__func__, "Destroyed buffer '%s'.",
+	vLogInfoFormatted(__func__, "Destroyed buffer '%s'.",
 		buffer->name);
 
 	/* UNSYNC	*/ vCoreUnlock();
@@ -162,7 +162,7 @@ VAPI vPTR  vBufferAdd(vHNDL buffHndl)
 		if (result == TRUE) continue;
 
 		/* on element free, set bit and increment use count */
-		_bittestandset(&buff->useField[chunk], bit);
+		_bittestandset64(&buff->useField[chunk], bit);
 		buff->elementsUsed++;
 
 		/* get ptr and zero memory */
@@ -198,7 +198,7 @@ VAPI void  vBufferRemove(vHNDL buffHndl, vPTR element)
 	else
 	{
 		/* reset bit and decrement use count */
-		_bittestandreset(&buff->useField[chunk], bit);
+		_bittestandreset64(&buff->useField[chunk], bit);
 		buff->elementsUsed--;
 	}
 
@@ -222,7 +222,7 @@ VAPI void  vBufferRemoveIndex(vHNDL buffHndl, vUI16 index)
 	else
 	{
 		/* reset bit and decrement use count */
-		_bittestandreset(&buff->useField[chunk], bit);
+		_bittestandreset64(&buff->useField[chunk], bit);
 		buff->elementsUsed--;
 	}
 
@@ -239,6 +239,17 @@ VAPI vUI16 vBufferGetElementIndex(vHNDL buffer, vPTR element)
 VAPI vPTR  vBufferGetIndex(vHNDL buffer, vUI16 index)
 {
 	vPBuffer buff = vhGetBufferLocked(buffer);
+
+	if (buff->inUse == FALSE)
+	{
+		vLogError(__func__, "Tried to get index from buffer that doesn't exist");
+		return NULL;
+	}
+	if (vBufferIndexUsed(buffer, index) == FALSE)
+	{
+		vLogError(__func__, "Tried to get index that was unused.");
+		return NULL;
+	}
 
 	return buff->data + (index * buff->elementSize);
 }
@@ -284,5 +295,19 @@ VAPI void vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut)
 
 	float usePercentNormalized = (float)buff->elementsUsed / (float)buff->capacity;
 	infoOut->usePercentage = usePercentNormalized * 100.0f;
+}
+
+VAPI vBOOL vBufferExists(vHNDL buffer)
+{
+	vPBuffer buff = vhGetBufferLocked(buffer);
+	return buff->inUse;
+}
+
+VAPI vBOOL vBufferIndexUsed(vHNDL buffer, vUI16 index)
+{
+	vPBuffer buff = vhGetBufferLocked(buffer);
+	vUI64 chunk, bit;
+	vhMapIndexToUseField(index, &chunk, &bit);
+	return _bittest64(&buff->useField[chunk], bit);
 }
 

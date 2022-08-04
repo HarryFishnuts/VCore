@@ -73,7 +73,7 @@ VAPI vBOOL vCoreInitialize(void)
 	}
 
 	/* log startup */
-	vLogEvent(__func__, "VCore initialized.");
+	vLogInfo(__func__, "VCore initialized.");
 
 	return TRUE;
 }
@@ -83,7 +83,7 @@ VAPI vBOOL vCoreTerminate(void)
 	if (!vhIsInitialized()) return FALSE;
 
 	/* log shutdown and dump */
-	vLogEvent(__func__, "VCore terminating.");
+	vLogInfo(__func__, "VCore terminating.");
 	vDumpEntryBuffer();
 
 	/* destroy sync object */

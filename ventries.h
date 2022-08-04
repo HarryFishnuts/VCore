@@ -11,7 +11,7 @@
 
 
 /* ========== EVENT LOGGING						==========	*/
-VAPI void vLogEvent(const char* funcName, const char* remarks);
+VAPI void vLogInfo(const char* funcName, const char* remarks);
 VAPI void vLogWarning(const char* funcName, const char* remarks);
 VAPI void vLogError(const char* funcName, const char* remarks);
 

@@ -31,6 +31,8 @@ VAPI void  vBufferIterate(vHNDL buffer, vPFBUFFERITERATEFUNC function);
 
 
 /* ========== BUFFER INFORMATION				==========	*/
-VAPI void vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut);
+VAPI void  vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut);
+VAPI vBOOL vBufferExists(vHNDL buffer);
+VAPI vBOOL vBufferIndexUsed(vHNDL buffer, vUI16 index);
 
 #endif

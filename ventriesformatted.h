@@ -12,9 +12,8 @@
 
 
 /* ========== FORMATTED EVENT LOGGING			==========	*/
-VAPI void vLogEventFormatted(const char* funcName, const char* remarks, ...);
+VAPI void vLogInfoFormatted(const char* funcName, const char* remarks, ...);
 VAPI void vLogWarningFormatted(const char* funcName, const char* remarks, ...);
 VAPI void vLogErrorFormatted(const char* funcName, const char* remarks, ...);
-
 
 #endif

@@ -122,7 +122,7 @@ static __forceinline void vfAddEntry(vBYTE entryType,
 }
 
 /* ========== EVENT LOGGING						==========	*/
-VAPI void vLogEvent(const char* funcName, const char* remarks)
+VAPI void vLogInfo(const char* funcName, const char* remarks)
 {
 	vfAddEntry(ENTRY_EVENT, funcName, remarks);
 }
@@ -164,7 +164,7 @@ VAPI vBOOL vReadEntryBuffer(const char* fileName, vPEntryBuffer buffer)
 
 	/* read to buffer */
 	result = ReadFile(fHndl, buffer, sizeof(vEntryBuffer), NULL, NULL);
-	if (result == NULL) vCoreFatalError(__func__, "Could not read from file.");
+	if (result == ZERO) vCoreFatalError(__func__, "Could not read from file.");
 
 	/* close file */
 	CloseHandle(fHndl);

@@ -9,7 +9,7 @@
 
 
 /* ========== FORMATTED EVENT LOGGING			==========	*/
-VAPI void vLogEventFormatted(const char* funcName, const char* remarks, ...)
+VAPI void vLogInfoFormatted(const char* funcName, const char* remarks, ...)
 {
 	va_list arguments;
 
@@ -18,7 +18,7 @@ VAPI void vLogEventFormatted(const char* funcName, const char* remarks, ...)
 
 	va_start(arguments, remarks);
 	vsprintf_s(strBuff, sizeof(strBuff), remarks, arguments);
-	vLogEvent(funcName, strBuff);
+	vLogInfo(funcName, strBuff);
 	va_end(arguments);
 }
 
