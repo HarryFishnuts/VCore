@@ -26,13 +26,13 @@ static __forceinline vUI32 vhFindFreeBufferIndex(void)
 	vCoreFatalError(__func__, "Could not create more buffers.");
 }
 
-static __forceinline void vhMapIndexToUseField(vUI16 index, vPUI16 chunk, vPUI16 bit)
+static __forceinline void vhMapIndexToUseField(vUI64 index, vPUI64 chunk, vPUI64 bit)
 {
 	*chunk	= (index >> 0x06    );
 	*bit	= (index &  0b111111);
 }
 
-static __forceinline vUI16 vhMapUseFieldToIndex(vUI64 chunk, vUI64 bit)
+static __forceinline vUI64 vhMapUseFieldToIndex(vUI64 chunk, vUI64 bit)
 {
 	return (chunk << 0x06) + bit;
 }
@@ -81,7 +81,7 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 
 	/* allocate memory for field and data */
 	buffer->useFieldLength  = (buffer->sizeBytes >> 0x03) + 1;
-	buffer->useField		= vAllocZeroed(sizeof(vPUI16) * buffer->useFieldLength);
+	buffer->useField		= vAllocZeroed(sizeof(vUI64) * buffer->useFieldLength);
 	buffer->data			= vAllocZeroed(buffer->sizeBytes);
 
 	/* log buffer creation */
@@ -154,10 +154,13 @@ VAPI vPTR  vBufferAdd(vHNDL buffHndl)
 
 	/* search for free index */
 	vUI16 startIndex = buff->elementsUsed >> 0x1;
-	for (vUI16 i = startIndex; i < buff->capacity; i++)
+	for (vUI64 i = 0; i < buff->capacity; i++)
 	{
+		/* start at offset */
+		vUI64 indexActual = (i + startIndex) % buff->capacity;
+
 		vUI64 chunk, bit = 0;
-		vhMapIndexToUseField(i, &chunk, &bit);
+		vhMapIndexToUseField(indexActual, &chunk, &bit);
 
 		/* bittest to see if element is free */
 		BOOLEAN result = _bittest64(&buff->useField[chunk], bit);
@@ -168,7 +171,7 @@ VAPI vPTR  vBufferAdd(vHNDL buffHndl)
 		buff->elementsUsed++;
 
 		/* get ptr and zero memory */
-		vPTR elemPtr = buff->data + (i * buff->elementSize);
+		vPTR elemPtr = buff->data + (indexActual * buff->elementSize);
 		vZeroMemory(elemPtr, buff->elementSize);
 
 		/* UNSYNC	*/ vBufferUnlock(buffHndl);

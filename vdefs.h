@@ -57,9 +57,9 @@
 
 
 /* ========== STRINGS							==========	*/
-#define EVENTLOG_DIR			"eventlog"
-#define EVENTLOG_FILENAME		"log"
-#define EVENTLOG_FILEEXTENSION	".txt"
+#define ENTRYLOG_DIR			"eventlog"
+#define ENTRYLOG_FILENAME		"log"
+#define ENTRYLOG_FILEEXTENSION	".txt"
 #define FATAL_ERROR_CAPTION		"VCore Fatal Error"
 
 #endif

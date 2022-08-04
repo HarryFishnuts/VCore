@@ -59,7 +59,18 @@ VAPI vBOOL vCoreInitialize(void)
 	_vcore.initializationTime = GetTickCount64();
 
 	/* create logging directory */
-	CreateDirectoryA(EVENTLOG_DIR, NULL);
+	CreateDirectoryA(ENTRYLOG_DIR, NULL);
+
+	/* delete all logfiles in directory */
+	char logNameBuff[BUFF_SMALL];
+	for (int i = 0; i < MAX_ENTRYLOGS_ON_DISK; i++)
+	{
+		vhZeroMemory(logNameBuff, sizeof(logNameBuff));
+		sprintf_s(logNameBuff, sizeof(logNameBuff),
+			"%s\\%s%d%s", ENTRYLOG_DIR, ENTRYLOG_FILENAME, i,
+			ENTRYLOG_FILEEXTENSION);
+		DeleteFileA(logNameBuff);
+	}
 
 	/* log startup */
 	vLogEvent(__func__, "VCore initialized.");

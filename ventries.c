@@ -44,8 +44,8 @@ static __forceinline void vfEntryWriteRollover(void)
 	/* construct name of file to write to */
 	vZeroMemory(_vcore.stringBuffer, sizeof(_vcore.stringBuffer));
 	sprintf_s(_vcore.stringBuffer, sizeof(_vcore.stringBuffer),
-		"%s\\%s%d%s", EVENTLOG_DIR, EVENTLOG_FILENAME, _vcore.entryBuffer.logFileNumber,
-		EVENTLOG_FILEEXTENSION);
+		"%s\\%s%d%s", ENTRYLOG_DIR, ENTRYLOG_FILENAME, _vcore.entryBuffer.logFileNumber,
+		ENTRYLOG_FILEEXTENSION);
 
 	/* write to file */
 	vfWriteEntryBufferToFile(_vcore.stringBuffer);
@@ -67,8 +67,8 @@ static __forceinline void vfEntryWriteUpdate(void)
 	/* construct name of file to write to */
 	vZeroMemory(_vcore.stringBuffer, sizeof(_vcore.stringBuffer));
 	sprintf_s(_vcore.stringBuffer, sizeof(_vcore.stringBuffer),
-		"%s\\%s%d%s", EVENTLOG_DIR, EVENTLOG_FILENAME, _vcore.entryBuffer.logFileNumber,
-		EVENTLOG_FILEEXTENSION);
+		"%s\\%s%d%s", ENTRYLOG_DIR, ENTRYLOG_FILENAME, _vcore.entryBuffer.logFileNumber,
+		ENTRYLOG_FILEEXTENSION);
 
 	/* write to file */
 	vfWriteEntryBufferToFile(_vcore.stringBuffer);
