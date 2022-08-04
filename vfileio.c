@@ -156,3 +156,25 @@ VAPI vBOOL vFileWriteLocked(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
 
 	/* UNSYNC	*/ LeaveCriticalSection(&_vcore.fileLock);
 }
+
+
+/* ========== FILE INFORMATION					==========	*/
+VAPI vBOOL vFileExists(const char* fileName)
+{
+	DWORD fileAttributes = GetFileAttributesA(fileName);
+	return (fileAttributes != INVALID_FILE_ATTRIBUTES) &&
+		!(fileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+}
+
+VAPI vUI64 vFileSize(HANDLE fHndl)
+{
+	vUI64 sizeOut = 0;
+	BOOL result = GetFileSizeEx(fHndl, &sizeOut);
+	if (result == FALSE)
+	{
+		vLogWarningFormatted(__func__, "Could not get file size. Win32 Error: %d\n",
+			GetLastError());
+	}
+
+	return sizeOut;
+}

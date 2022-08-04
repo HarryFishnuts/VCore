@@ -27,4 +27,9 @@ VAPI vBOOL vFileReadLocked(HANDLE fHndl, vUI32 readOffset, vUI32 readAmount,
 VAPI vBOOL vFileWriteLocked(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
 	vPTR inBuffer);
 
+
+/* ========== FILE INFORMATION					==========	*/
+VAPI vBOOL vFileExists(const char* fileName);
+VAPI vUI64 vFileSize(HANDLE fHndl);
+
 #endif 
