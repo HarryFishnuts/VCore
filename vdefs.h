@@ -37,7 +37,9 @@
 #define HEAP_ALLOCATE_MIN 0x010000
 #define HEAP_ALLOCATE_MAX 0x100000
 
-#define ENTRIES_SAVED_IN_MEMORY 0x100
+#define MAX_ENTRIES_IN_MEMORY		0x100
+#define MAX_ENTRYLOGS_ON_DISK		0x008
+#define ENTRYLOG_DUMP_INTERVAL_SEC	0x020
 
 
 /* ========== ENTRY TYPES						==========	*/
@@ -48,6 +50,9 @@
 
 
 /* ========== STRINGS							==========	*/
+#define EVENTLOG_DIR			"eventlog"
+#define EVENTLOG_FILENAME		"log"
+#define EVENTLOG_FILEEXTENSION	".txt"
 #define FATAL_ERROR_CAPTION		"VCore Fatal Error"
 
 #endif

@@ -25,6 +25,9 @@
     <Filter Include="Header Files\Logging">
       <UniqueIdentifier>{1325fdb7-86f3-4760-9175-40576e044153}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Logging">
+      <UniqueIdentifier>{1a6043e1-95fe-42a2-872b-ca4f85aa47a3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -49,6 +52,9 @@
   <ItemGroup>
     <ClCompile Include="vcorefunctions.c">
       <Filter>Source Files\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ventries.c">
+      <Filter>Source Files\Logging</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

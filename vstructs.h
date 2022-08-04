@@ -30,11 +30,15 @@ typedef struct vEntry
 /* ========== ENTRY BUFFER						==========	*/
 typedef struct vEntryBuffer
 {
-	vUI32 entriesTotal;		/* total entries created	*/
-	vUI16 entriesInMemory;		/* entries in memory		*/
-	vUI16 diskWriteCount;		/* buffers written to disk	*/
+	vTIME lastWriteTime;
 
-	vEntry buffer[ENTRIES_SAVED_IN_MEMORY];
+	vUI32 entriesTotal;			/* total entries created				*/
+	vUI16 entriesInMemory;		/* entries in memory					*/
+	vUI16 diskWriteCount;		/* times written to disk				*/
+	vUI16 logFileNumber;		/* number which rollovers once it		*/
+								/* reaches the MAX_ENTRYLOGS_ON_DISK	*/
+
+	vEntry buffer[MAX_ENTRIES_IN_MEMORY];
 } vEntryBuffer, *vPEntryBuffer;
 
 

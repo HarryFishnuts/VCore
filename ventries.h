@@ -11,8 +11,13 @@
 
 
 /* ========== EVENT LOGGING						==========	*/
-VAPI vLogEvent(const char* funcName, const char* remarks);
-VAPI vLogWarning(const char* funcName, const char* remarks);
-VAPI vLogError(const char* funcName, const char* remarks);
+VAPI void vLogEvent(const char* funcName, const char* remarks);
+VAPI void vLogWarning(const char* funcName, const char* remarks);
+VAPI void vLogError(const char* funcName, const char* remarks);
+
+
+/* ========== FILE I/O							==========	*/
+VAPI void  vDumpEntryBuffer(void);
+VAPI vBOOL vReadEntryBuffer(const char* fileName, vPEntryBuffer buffer);
 
 #endif

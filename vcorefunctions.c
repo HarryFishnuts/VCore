@@ -57,12 +57,22 @@ VAPI vBOOL vCoreInitialize(void)
 	_vcore.initialized = TRUE;
 	_vcore.initializationTime = GetTickCount64();
 
+	/* create logging directory */
+	CreateDirectoryA(EVENTLOG_DIR, NULL);
+
+	/* log startup */
+	vLogEvent(__func__, "VCore initialized.");
+
 	return TRUE;
 }
 
 VAPI vBOOL vCoreTerminate(void)
 {
 	if (!vhIsInitialized()) return FALSE;
+
+	/* log shutdown and dump */
+	vLogEvent(__func__, "VCore terminating.");
+	vDumpEntryBuffer();
 
 	/* destroy sync object */
 	EnterCriticalSection(&_vcore.rwPermission);

@@ -11,6 +11,7 @@
 #include "vdefs.h"			/* all macros and magic numbers	*/
 #include "vstructs.h"		/* all structures				*/
 #include "vcorefunctions.h"	/* core functions				*/
+#include "ventries.h"		/* logging functions			*/
 
 
 
