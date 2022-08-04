@@ -57,6 +57,9 @@
     <ClInclude Include="vbuffers.h">
       <Filter>Header Files\Buffering</Filter>
     </ClInclude>
+    <ClInclude Include="ventriesformatted.h">
+      <Filter>Header Files\Logging</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vcorefunctions.c">
@@ -67,6 +70,9 @@
     </ClCompile>
     <ClCompile Include="vbuffers.c">
       <Filter>Source Files\Buffering</Filter>
+    </ClCompile>
+    <ClCompile Include="ventriesformatted.c">
+      <Filter>Source Files\Logging</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

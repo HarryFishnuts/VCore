@@ -24,6 +24,7 @@
     <ClInclude Include="vcorefunctions.h" />
     <ClInclude Include="vdefs.h" />
     <ClInclude Include="ventries.h" />
+    <ClInclude Include="ventriesformatted.h" />
     <ClInclude Include="vstructs.h" />
     <ClInclude Include="vtypes.h" />
   </ItemGroup>
@@ -31,6 +32,7 @@
     <ClCompile Include="vbuffers.c" />
     <ClCompile Include="vcorefunctions.c" />
     <ClCompile Include="ventries.c" />
+    <ClCompile Include="ventriesformatted.c" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

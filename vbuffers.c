@@ -5,7 +5,6 @@
 
 /* ========== INCLUDES							==========	*/
 #include "vbuffers.h"
-#include <stdio.h>
 #include <intrin.h>
 
 
@@ -85,12 +84,10 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	buffer->data			= vAllocZeroed(buffer->sizeBytes);
 
 	/* log buffer creation */
-	char remarks[BUFF_MEDIUM];
-	vZeroMemory(remarks, sizeof(remarks));
-	sprintf_s(remarks, sizeof(remarks),
-		"Created buffer '%s' with element size %d and capacity %d.",
+	vLogEventFormatted(__func__,
+		"Buffer '%s' created with "
+		"element size %d and capacity %d.",
 		buffer->name, buffer->elementSize, buffer->capacity);
-	vLogEvent(__func__, remarks);
 
 	/* UNSYNC	*/ vCoreUnlock();
 
@@ -121,10 +118,8 @@ VAPI vBOOL vDestroyBuffer(vHNDL buffHndl)
 	buffer->inUse = FALSE;
 
 	/* log buffer deletion */
-	char remarkBuffer[BUFF_MEDIUM];
-	vZeroMemory(remarkBuffer, sizeof(remarkBuffer));
-	sprintf_s(remarkBuffer, sizeof(remarkBuffer),
-		"Destroyed buffer '%s'.", buffer->name);
+	vLogEventFormatted(__func__, "Destroyed buffer '%s'.",
+		buffer->name);
 
 	/* UNSYNC	*/ vCoreUnlock();
 
