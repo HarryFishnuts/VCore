@@ -141,7 +141,9 @@ VAPI void vLogError(const char* funcName, const char* remarks)
 /* ========== FILE I/O							==========	*/
 VAPI void vDumpEntryBuffer(void)
 {
+	/* SYNC		*/ vCoreLock();
 	vfEntryWriteUpdate();
+	/* UNSYNC	*/ vCoreUnlock();
 }
 
 VAPI vBOOL vReadEntryBuffer(const char* fileName, vPEntryBuffer buffer)

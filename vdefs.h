@@ -18,6 +18,11 @@
 #endif
 
 
+/* ========== PREPROCESSOR DEFINITIONS			==========	*/
+#define WIN32_LEAN_AND_MEAN
+#define _CTR_SECURE_NO_WARNINGS
+
+
 /* ========== MACROS							==========	*/
 #define ZERO		0
 #define NOTHING		0
@@ -40,6 +45,8 @@
 #define MAX_ENTRIES_IN_MEMORY		0x100
 #define MAX_ENTRYLOGS_ON_DISK		0x008
 #define ENTRYLOG_DUMP_INTERVAL_SEC	0x020
+
+#define MAX_BUFFERS		0x100
 
 
 /* ========== ENTRY TYPES						==========	*/

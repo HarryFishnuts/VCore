@@ -19,6 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="vbuffers.h" />
     <ClInclude Include="vcore.h" />
     <ClInclude Include="vcorefunctions.h" />
     <ClInclude Include="vdefs.h" />
@@ -27,6 +28,7 @@
     <ClInclude Include="vtypes.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="vbuffers.c" />
     <ClCompile Include="vcorefunctions.c" />
     <ClCompile Include="ventries.c" />
   </ItemGroup>

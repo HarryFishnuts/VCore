@@ -42,6 +42,45 @@ typedef struct vEntryBuffer
 } vEntryBuffer, *vPEntryBuffer;
 
 
+/* ========== BUFFER							==========	*/
+typedef struct vBuffer
+{
+	vBOOL inUse;
+
+	CRITICAL_SECTION rwPermission;	/* thread synchronization object		*/
+
+	vTIME timeCreated;
+	vCHAR name[BUFF_SMALL];
+
+	vUI16 elementSize;				/* size of each element					*/
+	vUI16 capacity;					/* max amount of elements storable		*/
+	vUI32 sizeBytes;				/* data size in bytes					*/
+
+	vUI16 elementsUsed;				/* amount of elements used				*/
+
+	vUI16  useFieldLength;			/* useage field array size				*/
+	vPUI64 useField;				/* usage bitfield (stored on heap)		*/
+
+	vPBYTE data;					/* ptr to data on heap					*/
+} vBuffer, *vPBuffer;
+
+
+/* ========== BUFFER INFORMATION				==========	*/
+typedef struct vBufferInfo
+{
+	vCHAR* name;
+
+	vTIME timeCreated;
+	vUI16 elementUsed;
+
+	vUI16 elementSize;
+	vUI16 capacity;
+	vUI32 sizeBytes;
+
+	float usePercentage;
+} vBufferInfo, *vPBufferInfo;
+
+
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/
 /* across all source files of VCore.						*/
@@ -58,7 +97,9 @@ typedef struct _vCoreInternals
 	vCHAR  stringBuffer[BUFF_LARGE];	/* pre-allocated string buffer	*/
 	vTIME  initializationTime;			/* time initialized in msecs	*/
 
-	vEntryBuffer entryBuffer;
+	vEntryBuffer entryBuffer;			/* entry system container		*/
+
+	vBuffer buffers[MAX_BUFFERS];		/* buffer list					*/
 
 } _vCoreInternals, *_vPCoreInternals;
 

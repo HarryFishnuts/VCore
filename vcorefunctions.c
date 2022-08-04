@@ -2,6 +2,7 @@
 /* ========== <vcorefunctions.c>				==========	*/
 /* Bailey Jia-Tao Brown							2022		*/
 
+
 /* ========== INCLUDES							==========	*/
 #include "vcorefunctions.h"
 #include <stdio.h>

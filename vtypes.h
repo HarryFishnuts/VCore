@@ -46,8 +46,12 @@ typedef vUI8   vBYTE;
 typedef vBYTE* vPBYTE;
 typedef void*  vPTR;
 typedef vUI32  vHNDL;
-typedef vUI32  vINDEX;
 typedef vUI64  vTIME;
 typedef vTIME* vPTIME;
+
+
+/* ========== CALLBACK TYPES					==========	*/
+typedef void (*vPFBUFFERITERATEFUNC)(vHNDL buffer, vUI16 index, vPTR element);
+
 
 #endif

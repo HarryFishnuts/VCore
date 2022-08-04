@@ -28,6 +28,12 @@
     <Filter Include="Source Files\Logging">
       <UniqueIdentifier>{1a6043e1-95fe-42a2-872b-ca4f85aa47a3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Buffering">
+      <UniqueIdentifier>{171bece8-e7ce-40d0-9ef9-23fe11305c57}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Buffering">
+      <UniqueIdentifier>{569257dd-bb45-4052-81d0-0a48b81ebc4e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -48,6 +54,9 @@
     <ClInclude Include="ventries.h">
       <Filter>Header Files\Logging</Filter>
     </ClInclude>
+    <ClInclude Include="vbuffers.h">
+      <Filter>Header Files\Buffering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vcorefunctions.c">
@@ -55,6 +64,9 @@
     </ClCompile>
     <ClCompile Include="ventries.c">
       <Filter>Source Files\Logging</Filter>
+    </ClCompile>
+    <ClCompile Include="vbuffers.c">
+      <Filter>Source Files\Buffering</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

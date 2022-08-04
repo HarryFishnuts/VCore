@@ -12,6 +12,7 @@
 #include "vstructs.h"		/* all structures				*/
 #include "vcorefunctions.h"	/* core functions				*/
 #include "ventries.h"		/* logging functions			*/
+#include "vbuffers.h"		/* buffering functions			*/
 
 
 
