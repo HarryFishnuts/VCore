@@ -28,6 +28,8 @@ VAPI void  vBufferRemoveIndex(vHNDL buffer, vUI16 index);
 VAPI vUI16 vBufferGetElementIndex(vHNDL buffer, vPTR element);
 VAPI vPTR  vBufferGetIndex(vHNDL buffer, vUI16 index);
 VAPI void  vBufferIterate(vHNDL buffer, vPFBUFFERITERATEFUNC function);
+VAPI vPTR  vBufferGetData(vHNDL buffer, PSIZE_T dataSize);
+VAPI vUI64 vBufferGetField(vHNDL buffer, PSIZE_T fieldSize);
 
 
 /* ========== BUFFER INFORMATION				==========	*/

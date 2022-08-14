@@ -280,6 +280,26 @@ VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
 	/* UNSYNC	*/ vBufferUnlock(buffHndl);
 }
 
+VAPI vPTR  vBufferGetData(vHNDL buffer, PSIZE_T dataSize)
+{
+	vPBuffer buff = vhGetBufferLocked(buffer);
+
+	if (dataSize != NULL)
+		*dataSize = buff->sizeBytes;
+
+	return buff->data;
+}
+
+VAPI vUI64 vBufferGetField(vHNDL buffer, PSIZE_T fieldSize)
+{
+	vPBuffer buff = vhGetBufferLocked(buffer);
+
+	if (fieldSize != NULL)
+		*fieldSize = buff->useFieldLength * sizeof(vUI64);
+
+	return buff->useField;
+}
+
 
 /* ========== BUFFER INFORMATION				==========	*/
 VAPI void vBufferGetInfo(vHNDL buffer, vPBufferInfo infoOut)
