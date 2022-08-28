@@ -98,6 +98,8 @@ typedef struct _vCoreInternals
 	vCHAR  stringBuffer[BUFF_LARGE];	/* pre-allocated string buffer	*/
 	vTIME  initializationTime;			/* time initialized in msecs	*/
 
+	vUI64 memoryUseage;					/* bytes alloced by vAlloc		*/
+
 	vEntryBuffer entryBuffer;			/* entry system container		*/
 
 	vBuffer buffers[MAX_BUFFERS];		/* buffer list					*/

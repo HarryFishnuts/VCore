@@ -34,10 +34,12 @@ VAPI void vCoreCrash(void);
 VAPI vPTR vAlloc(size_t size);
 VAPI vPTR vAllocZeroed(size_t size);
 VAPI void vFree(vPTR ptr);
+VAPI vUI64 vGetMemoryUseage(void);
 
 
 /* ========== MEMORY MANIPULATION				==========	*/
 VAPI void vZeroMemory(vPTR block, size_t length);
 VAPI void vMemCopy(vPTR destination, vPTR source, size_t length);
+VAPI _vPCoreInternals vGetInternals(void);
 
 #endif
