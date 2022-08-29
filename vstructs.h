@@ -104,7 +104,6 @@ typedef struct _vCoreInternals
 
 	vBuffer buffers[MAX_BUFFERS];		/* buffer list					*/
 
-	vUI64 lockUseField;					/* lock useage bitfield			*/
 	CRITICAL_SECTION locks[MAX_LOCKS];	/* lock buffer					*/
 
 } _vCoreInternals, *_vPCoreInternals;

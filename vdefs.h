@@ -49,7 +49,7 @@
 #define MAX_BUFFERS		0x100
 
 #define MAX_LOCKS		0x800
-
+#define UNUSED_LOCK		0xDEAD
 
 /* ========== ENTRY TYPES						==========	*/
 #define ENTRY_UNUSED	0x00

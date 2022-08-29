@@ -75,6 +75,12 @@ VAPI vBOOL vCoreInitialize(void)
 		DeleteFileA(logNameBuff);
 	}
 
+	/* initialize all locks to be unused */
+	for (int i = 0; i < MAX_LOCKS; i++)
+	{
+		*(DWORD*)&_vcore.locks[i] = UNUSED_LOCK;
+	}
+
 	/* log startup */
 	vLogInfo(__func__, "VCore initialized.");
 
@@ -96,7 +102,12 @@ VAPI vBOOL vCoreTerminate(void)
 	/* remove all locks */
 	for (int i = 0; i < MAX_LOCKS; i++)
 	{
-		vDestroyLock(i);
+		/* if lock doesn't exist, skip */
+		if (*(DWORD*)&_vcore.locks[i] == UNUSED_LOCK) continue;
+
+		/* lock and delete */
+		EnterCriticalSection(&_vcore.locks[i]);
+		DeleteCriticalSection(&_vcore.locks[i]);
 	}
 
 	/* destroy sync objects */

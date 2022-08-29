@@ -13,10 +13,7 @@ static __forceinline vUI32 vhFindFreeLockIndex(void)
 {
 	for (vI64 i = 0; i < MAX_LOCKS; i++)
 	{
-		if (_bittest64(&_vcore.lockUseField, i) == TRUE) continue;
-
-		_bittestandset64(&_vcore.lockUseField, i); /* set as used and return index */
-		return i;
+		if (*(DWORD*)&_vcore.locks[i] == UNUSED_LOCK) return i;
 	}
 
 	/* on reached here, all used, end process */
@@ -45,8 +42,7 @@ VAPI void  vDestroyLock(vHNDL lock)
 	/* SYNC		*/ vCoreLock();
 
 	/* ensure lock is active */
-	BOOLEAN useTest = _bittest64(&_vcore.lockUseField, lock);
-	if (useTest == FALSE)
+	if (*(DWORD*)&_vcore.locks[lock] == UNUSED_LOCK)
 	{
 		vLogWarningFormatted(__func__, 
 			"Tried to destroy lock with handle '%d' but it doesn't exist.", lock);
@@ -58,7 +54,7 @@ VAPI void  vDestroyLock(vHNDL lock)
 	DeleteCriticalSection(&_vcore.locks[lock]);
 
 	/* set use flag to false */
-	_bittestandreset64(&_vcore.lockUseField, lock);
+	*(DWORD*)&_vcore.locks[lock] = UNUSED_LOCK;
 
 	vLogInfoFormatted(__func__, "Destroyed lock with handle: %d.", lock);
 
