@@ -267,6 +267,7 @@ VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
 	/* SYNC		*/ vBufferLock(buffHndl);
 
 	/* loop over all ACTIVE elements	*/
+	vUI32 runCount = 0;
 	for (vUI16 i = 0; i < buff->capacity; i++)
 	{
 		vUI64 chunk, bit = 0;
@@ -275,6 +276,9 @@ VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
 		if (_bittest64(&buff->useField[chunk], bit) == FALSE) continue;
 
 		function(buffHndl, i, buff->data + (i * buff->elementSizeBytes));
+		
+		/* once all active elements are processed, break */
+		if (runCount++ >= buff->elementsUsed)	break;
 	}
 
 	/* UNSYNC	*/ vBufferUnlock(buffHndl);
