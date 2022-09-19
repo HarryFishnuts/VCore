@@ -68,7 +68,7 @@ typedef struct vBuffer
 /* ========== BUFFER INFORMATION				==========	*/
 typedef struct vBufferInfo
 {
-	vCHAR* name;
+	vPCHAR name;
 
 	vTIME timeCreated;
 	vUI16 elementsUsed;
@@ -80,6 +80,33 @@ typedef struct vBufferInfo
 	float usePercentage;
 } vBufferInfo, *vPBufferInfo;
 
+
+/* ========== DBUFFER							==========	*/
+typedef struct vDBufferNode
+{
+	struct vDBuffer* parent;
+
+	struct vDBufferNode* next;
+	vPUI64 useField;
+	vPTR   block;
+} vDBufferNode, *vPDBufferNode;
+
+
+typedef struct vDBuffer
+{
+	vBOOL inUse;
+
+	CRITICAL_SECTION rwPermission;
+
+	vTIME timeCreated;
+	vCHAR name[BUFF_SMALL];
+
+	vUI64 elementSizeBytes;
+	vUI64 elementCount;
+
+	vPDBufferNode head;
+	vPDBufferNode tail;
+} vDBuffer, *vPDBuffer;
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/
@@ -102,7 +129,8 @@ typedef struct _vCoreInternals
 
 	vEntryBuffer entryBuffer;			/* entry system container		*/
 
-	vBuffer buffers[MAX_BUFFERS];		/* buffer list					*/
+	vBuffer  buffers[MAX_BUFFERS];		/* buffer list					*/
+	vDBuffer dbuffers[MAX_DBUFFERS];	/* dynamic buffer list			*/
 
 	CRITICAL_SECTION locks[MAX_LOCKS];	/* lock buffer					*/
 

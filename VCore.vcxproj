@@ -22,6 +22,7 @@
     <ClInclude Include="vbuffers.h" />
     <ClInclude Include="vcore.h" />
     <ClInclude Include="vcorefunctions.h" />
+    <ClInclude Include="vdbuffers.h" />
     <ClInclude Include="vdefs.h" />
     <ClInclude Include="ventries.h" />
     <ClInclude Include="ventriesformatted.h" />
@@ -33,6 +34,7 @@
   <ItemGroup>
     <ClCompile Include="vbuffers.c" />
     <ClCompile Include="vcorefunctions.c" />
+    <ClCompile Include="vdbuffers.c" />
     <ClCompile Include="ventries.c" />
     <ClCompile Include="ventriesformatted.c" />
     <ClCompile Include="vfileio.c" />
