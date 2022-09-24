@@ -29,7 +29,7 @@ static __forceinline vPDBufferNode vhCreateBufferNode(vPDBuffer parent)
 	EnterCriticalSection(&parent->rwPermission);
 
 	vUI64 nodeSize = sizeof(vDBufferNode);
-	vUI64 useFieldSize = ((DBUFFER_NODE_CAPACITY >> 0x06) + 1) * sizeof(vUI64);
+	vUI64 useFieldSize = DBUFFER_FIELD_CAPACITY * sizeof(vUI64);
 	vUI64 blockSize = DBUFFER_NODE_CAPACITY * parent->elementSizeBytes;
 
 	/* alloc node to heap */
@@ -305,7 +305,7 @@ VAPI void vDBufferClear(vHNDL dBuffer)
 	/* walk all nodes and set their fields to NULL */
 	while (node != NULL)
 	{
-		vZeroMemory(node->useField, ((DBUFFER_NODE_CAPACITY >> 0x06) + 1) * sizeof(vUI64));
+		vZeroMemory(node->useField, DBUFFER_FIELD_CAPACITY * sizeof(vUI64));
 		node->elementCount = 0;
 		node = node->next;
 	}
