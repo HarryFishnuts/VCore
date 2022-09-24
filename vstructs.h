@@ -85,8 +85,10 @@ typedef struct vBufferInfo
 typedef struct vDBufferNode
 {
 	struct vDBuffer* parent;
-
 	struct vDBufferNode* next;
+
+	vUI32  elementCount;
+
 	vPUI64 useField;
 	vPTR   block;
 } vDBufferNode, *vPDBufferNode;

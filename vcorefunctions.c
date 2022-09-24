@@ -199,7 +199,7 @@ VAPI vPTR vAllocZeroed(size_t size)
 
 	if (block == NULL) vCoreFatalError(__func__,
 		"Could not allocate more memory.");
-	vhZeroMemory(block, size);
+	vhZeroMemory((vPBYTE)block + sizeof(vUI64), size);
 
 	*(vUI64*)block = size;
 	_vcore.memoryUseage += size;

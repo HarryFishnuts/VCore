@@ -27,22 +27,35 @@ static __forceinline vUI32 vhFindFreeDBufferIndex(void)
 
 static __forceinline vPDBufferNode vhCreateBufferNode(vPDBuffer parent)
 {
+	EnterCriticalSection(&parent->rwPermission);
+
 	/* alloc node to heap */
-	vPDBufferNode node = vAllocZeroed(parent->elementSizeBytes);
+	vPDBufferNode node = vAllocZeroed(sizeof(vDBufferNode));
+
+	printf("CREATED NEW: %p\n", node);
 
 	/* setup node members */
 	node->parent   = parent;
-	node->useField = vAllocZeroed((DBUFFER_NODE_CAPACITY >> 0x03) + 1);
+	int useFieldChunkCount = (DBUFFER_NODE_CAPACITY >> 0x03) + 1;
+	node->useField = vAllocZeroed(useFieldChunkCount * sizeof(vPUI64));
 	node->block    = vAllocZeroed(DBUFFER_NODE_CAPACITY * parent->elementSizeBytes);
+
+	LeaveCriticalSection(&parent->rwPermission);
 
 	return node;
 }
 
 static __forceinline void vhDestroyBufferNode(vPDBufferNode node)
 {
-	vFree(node->useField);
+	EnterCriticalSection(&node->parent->rwPermission);
+
+	printf("node: %p\n", (vPBYTE)node - 8);
+	printf("block: %p\n", (vPBYTE)(node->block) - 8);
 	vFree(node->block);
-	vFree(node);
+	vFree(node->useField); puts("freed field");
+	vFree(node); puts("freed node");
+
+	LeaveCriticalSection(&node->parent->rwPermission);
 }
 
 static __forceinline void vhMapIndexToUseField(vUI64 index, vPUI64 chunk, vPUI64 bit)
@@ -56,17 +69,23 @@ static __forceinline vUI64 vhMapUseFieldToIndex(vUI64 chunk, vUI64 bit)
 	return (chunk << 0x06) + bit;
 }
 
-static __forceinline vUI32 vhFindBufferNodeFreeIndex(vPDBufferNode node)
+static __forceinline vUI32 vhFindFreeBufferNodeIndex(vPDBufferNode node)
 {
+	/* if node is full, return */
+	if (node->elementCount >= DBUFFER_NODE_CAPACITY) return ~0;
+
 	/* find unused */
-	for (int i = 0; i < DBUFFER_NODE_CAPACITY; i++)
+	for (vUI64 i = 0; i < DBUFFER_NODE_CAPACITY; i++)
 	{
 		vUI64 chunk, bit;
 		vhMapIndexToUseField(i, &chunk, &bit);
-		if (_bittest64(&node->useField[chunk], bit) == FALSE)
+		if (_bittest64(node->useField + chunk, bit) == FALSE)
 		{
 			/* set used and return index */
-			_bittestandset64(&node->useField[chunk], bit);
+			_bittestandset64(node->useField + chunk, bit);
+
+			node->elementCount++; /* increment element count */
+
 			return i;
 		}
 			
@@ -109,6 +128,11 @@ VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize)
 
 	vCoreUnlock(); /* UNSYNC */
 
+	vLogInfoFormatted(__func__,
+		"Dynamic buffer '%s' created with "
+		"element size %d.",
+		dBuffer->name, dBuffer->elementSizeBytes);
+
 	return index;
 }
 
@@ -116,9 +140,22 @@ VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer)
 {
 	if (dBuffer < 0 || dBuffer > MAX_DBUFFERS) return FALSE;
 
-	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
-	vPDBufferNode node = buffer->head;
+	vCoreLock();
 
+	vPDBuffer buffer = _vcore.dbuffers + dBuffer;
+
+	/* check if already destroyed */
+	if (buffer->inUse == FALSE) 
+	{
+		vLogError(__func__, "Tried to destroy dynamic buffer which doesn't exist.");
+		return FALSE;
+	}
+		
+	/* mark as destroyed */
+	buffer->inUse = FALSE;
+
+	/* destroy all nodes */
+	vPDBufferNode node = buffer->head;
 	while (node != NULL)
 	{
 		/* toDestroy now points to current node */
@@ -131,6 +168,8 @@ VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer)
 		vhDestroyBufferNode(toDestroy);
 	}
 
+	vCoreUnlock();
+
 	return TRUE;
 }
 
@@ -141,7 +180,7 @@ VAPI void vDBufferLock(vHNDL dBuffer)
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
 	EnterCriticalSection(&buffer->rwPermission);
 }
-VAPI void vDBufferUnlcok(vHNDL dBuffer)
+VAPI void vDBufferUnlock(vHNDL dBuffer)
 {
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
 	LeaveCriticalSection(&buffer->rwPermission);
@@ -151,7 +190,26 @@ VAPI void vDBufferUnlcok(vHNDL dBuffer)
 /* ========== ELEMENT MANIPULATION				==========	*/
 VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 {
-	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
+	vPDBuffer buffer = _vcore.dbuffers + dBuffer;
+
+	vDBufferLock(dBuffer); /* SYNC */
+
+	/* first, try last node */
+	vUI32 freeIndex = vhFindFreeBufferNodeIndex(buffer->tail);
+	if (freeIndex != ~0)
+	{
+		/* on valid index, return PTR */
+		vPBYTE element = (vPBYTE)(buffer->tail->block) + ((buffer->elementSizeBytes) * freeIndex);
+		vZeroMemory(element, buffer->elementSizeBytes);
+		buffer->elementCount++;
+
+		vDBufferUnlock(dBuffer); /* UNSYNC */
+
+		return element;
+	}
+
+	/* IF THE LAST NODE IS FULL, TRY ALL PREVIOUS NODES.	*/
+	/* IF ALL ARE FULL, THEN CREATE A NEW NODE				*/
 
 	/* try add to each node */
 	vPDBufferNode currentNode = buffer->head;
@@ -159,9 +217,7 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 	while(TRUE)
 	{
 		/* try to add to current Node */
-		vUI32 freeIndex = vhFindBufferNodeFreeIndex(currentNode);
-
-		printf("node index: %d\n", freeIndex);
+		vUI32 freeIndex = vhFindFreeBufferNodeIndex(currentNode);
 
 		/* on no free, go to next */
 		if (freeIndex == ~0)
@@ -184,6 +240,10 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 		/* on valid index, return PTR */
 		vPBYTE element = (vPBYTE)(currentNode->block) + ((buffer->elementSizeBytes) * freeIndex);
 		vZeroMemory(element, buffer->elementSizeBytes);
+		buffer->elementCount++;
+
+		vDBufferUnlock(dBuffer); /* UNSYNC */
+
 		return element;
 	}
 
@@ -194,6 +254,8 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 
 VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 {
+	vDBufferLock(dBuffer);
+
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
 
 	vPDBufferNode node = buffer->head;
@@ -213,7 +275,14 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 			vhMapIndexToUseField(nodeIndex, &chunk, &bit);
 
 			/* set bit to be unused */
-			_bittestandreset64(&node->useField[chunk], bit);
+			_bittestandreset64(node->useField + chunk, bit);
+
+			/* decrement element count */
+			node->elementCount -= 1;
+
+			vDBufferUnlock(dBuffer);
+
+			return; /* end */
 		}
 
 		/* move to next block */
@@ -224,3 +293,11 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 VAPI void vDBufferIterate(vHNDL buffer, vPFBUFFERITERATEFUNC function);
 
 VAPI void vDBufferClear(vHNDL buffer);
+
+
+/* ========== BUFFER INFORMATION				==========	*/
+VAPI vUI32 vDBufferGetElementCount(vHNDL dBuffer)
+{
+	vPDBuffer buffer = _vcore.dbuffers + dBuffer;
+	return buffer->elementCount;
+}

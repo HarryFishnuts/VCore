@@ -16,7 +16,7 @@ VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer);
 
 /* ========== SYNCHRONIZATION					==========	*/
 VAPI void vDBufferLock(vHNDL dBuffer);
-VAPI void vDBufferUnlcok(vHNDL dBuffer);
+VAPI void vDBufferUnlock(vHNDL dBuffer);
 
 
 /* ========== ELEMENT MANIPULATION				==========	*/
@@ -24,5 +24,9 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer);
 VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element);
 VAPI void vDBufferIterate(vHNDL buffer, vPFBUFFERITERATEFUNC function);
 VAPI void vDBufferClear(vHNDL buffer);
+
+
+/* ========== BUFFER INFORMATION				==========	*/
+VAPI vUI32 vDBufferGetElementCount(vHNDL dBuffer);
 
 #endif
