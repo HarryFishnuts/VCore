@@ -52,6 +52,7 @@ typedef vTIME* vPTIME;
 
 /* ========== CALLBACK TYPES					==========	*/
 typedef void (*vPFBUFFERITERATEFUNC)(vHNDL buffer, vUI16 index, vPTR element);
+typedef void (*vPFDBUFFERITERATEFUNC)(vHNDL dbuffer, vPTR element);
 
 
 #endif

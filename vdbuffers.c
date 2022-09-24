@@ -268,9 +268,53 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 	}
 }
 
-VAPI void vDBufferIterate(vHNDL buffer, vPFBUFFERITERATEFUNC function);
+VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function)
+{
+	vDBufferLock(dBuffer);
+	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
 
-VAPI void vDBufferClear(vHNDL buffer);
+	/* walk every node */
+	vPDBufferNode node = buffer->head;
+	while (node != NULL)
+	{
+		/* check every element */
+		for (vUI64 i = 0; i < DBUFFER_NODE_CAPACITY; i++)
+		{
+			vUI64 chunk, index;
+			vhMapIndexToUseField(i, &chunk, &index);
+
+			/* if unused, skip */
+			if (_bittest64(&node->useField[chunk], index) == FALSE) continue;
+
+			function(dBuffer, (vPBYTE)node->block + (i * buffer->elementSizeBytes));
+		}
+
+		node = node->next;
+	}
+
+	vDBufferUnlock(dBuffer);
+}
+
+VAPI void vDBufferClear(vHNDL dBuffer) 
+{
+	vDBufferLock(dBuffer);
+	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
+
+	vPDBufferNode node = buffer->head;
+
+	/* walk all nodes and set their fields to NULL */
+	while (node != NULL)
+	{
+		vZeroMemory(node->useField, ((DBUFFER_NODE_CAPACITY >> 0x06) + 1) * sizeof(vUI64));
+		node->elementCount = 0;
+		node = node->next;
+	}
+
+	/* set elementcount to 0 */
+	buffer->elementCount = 0;
+
+	vDBufferUnlock(dBuffer);
+}
 
 
 /* ========== BUFFER INFORMATION				==========	*/
