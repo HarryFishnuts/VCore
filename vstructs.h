@@ -103,12 +103,27 @@ typedef struct vDBuffer
 	vTIME timeCreated;
 	vCHAR name[BUFF_SMALL];
 
+	vUI32 nodeSize;
+
 	vUI64 elementSizeBytes;
 	vUI64 elementCount;
 
 	vPDBufferNode head;
 	vPDBufferNode tail;
 } vDBuffer, *vPDBuffer;
+
+
+/* ========== VOBJECT							==========	*/
+typedef struct vObjectAttribute
+{
+	vCHAR attributeName[BUFF_SMALL];
+
+	vUI64 staticAttributeSizeByte;		/* attribute shared between all objects */
+	vUI64 objectAttributeSizeBytes;		/* attribute unique to each object		*/
+
+	CRITICAL_SECTION staticLock;	/* static r/w synchronization object	*/
+	vPTR staticAttribute;			/* ptr to static attribute memory		*/
+} vObjectAttribute, *vPObjectAttribute;
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/

@@ -29,8 +29,8 @@ static __forceinline vPDBufferNode vhCreateBufferNode(vPDBuffer parent)
 	EnterCriticalSection(&parent->rwPermission);
 
 	vUI64 nodeSize = sizeof(vDBufferNode);
-	vUI64 useFieldSize = DBUFFER_FIELD_CAPACITY * sizeof(vUI64);
-	vUI64 blockSize = DBUFFER_NODE_CAPACITY * parent->elementSizeBytes;
+	vUI64 useFieldSize = (((vUI64)parent->nodeSize >> 0x06) + 1) * sizeof(vUI64);
+	vUI64 blockSize = parent->nodeSize * parent->elementSizeBytes;
 
 	/* alloc node to heap */
 	vPDBufferNode node = vAllocZeroed(nodeSize + useFieldSize + blockSize);
@@ -67,10 +67,10 @@ static __forceinline vUI64 vhMapUseFieldToIndex(vUI64 chunk, vUI64 bit)
 static __forceinline vUI32 vhFindFreeBufferNodeIndex(vPDBufferNode node)
 {
 	/* if node is full, return */
-	if (node->elementCount >= DBUFFER_NODE_CAPACITY) return ~0;
+	if (node->elementCount >= node->parent->nodeSize) return ~0;
 
 	/* find unused */
-	for (vUI64 i = 0; i < DBUFFER_NODE_CAPACITY; i++)
+	for (vUI64 i = 0; i < node->parent->nodeSize; i++)
 	{
 		vUI64 chunk, bit;
 		vhMapIndexToUseField(i, &chunk, &bit);
@@ -92,7 +92,8 @@ static __forceinline vUI32 vhFindFreeBufferNodeIndex(vPDBufferNode node)
 
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize)
+VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize,
+	vUI32 nodeSize)
 {
 	vCoreLock(); /* SYNC */
 
@@ -114,6 +115,7 @@ VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize)
 	/* setup fields */
 	dBuffer->inUse = 1;
 	dBuffer->elementSizeBytes = elementSize;
+	dBuffer->nodeSize = nodeSize;
 	vCoreTime(&dBuffer->timeCreated);
 	InitializeCriticalSection(&dBuffer->rwPermission);
 
@@ -163,6 +165,8 @@ VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer)
 		vhDestroyBufferNode(toDestroy);
 	}
 
+	vLogInfoFormatted(__func__, "Destroyed dynamic buffer '%s'.", buffer->name);
+
 	vCoreUnlock();
 
 	return TRUE;
@@ -175,6 +179,7 @@ VAPI void vDBufferLock(vHNDL dBuffer)
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
 	EnterCriticalSection(&buffer->rwPermission);
 }
+
 VAPI void vDBufferUnlock(vHNDL dBuffer)
 {
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
@@ -227,7 +232,7 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 
 	/* SHOULD NEVER REACH HERE! */
 	vLogError(__func__, "Unexpected error while trying to add to dynamic buffer.");
-	vCoreCrash();
+	vCoreFatalError(__func__, "Unexpected error while trying to add to dynamic buffer.");
 }
 
 VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
@@ -243,7 +248,7 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 	{
 		if ((vPBYTE)element >= (vPBYTE)node->block && 
 			(vPBYTE)element <= (vPBYTE)node->block + 
-			(buffer->elementSizeBytes * DBUFFER_NODE_CAPACITY))
+			(buffer->elementSizeBytes * buffer->nodeSize))
 		{
 			/* get index using ptr math */
 			vUI32 nodeIndex = ((vPBYTE)element - (vPBYTE)node->block) / buffer->elementSizeBytes;
@@ -278,7 +283,7 @@ VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function)
 	while (node != NULL)
 	{
 		/* check every element */
-		for (vUI64 i = 0; i < DBUFFER_NODE_CAPACITY; i++)
+		for (vUI64 i = 0; i < buffer->nodeSize; i++)
 		{
 			vUI64 chunk, index;
 			vhMapIndexToUseField(i, &chunk, &index);
@@ -305,7 +310,8 @@ VAPI void vDBufferClear(vHNDL dBuffer)
 	/* walk all nodes and set their fields to NULL */
 	while (node != NULL)
 	{
-		vZeroMemory(node->useField, DBUFFER_FIELD_CAPACITY * sizeof(vUI64));
+		vZeroMemory(node->useField, 
+			(((vUI64)buffer->nodeSize >> 0x06) + 1) * sizeof(vUI64));
 		node->elementCount = 0;
 		node = node->next;
 	}

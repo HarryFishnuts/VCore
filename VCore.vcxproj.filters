@@ -46,6 +46,9 @@
     <Filter Include="Source Files\Locking">
       <UniqueIdentifier>{2080359b-81c0-4642-9333-ab6d06873258}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Object">
+      <UniqueIdentifier>{e41b99fa-11db-4418-acc8-d3260fbd3a72}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -80,6 +83,9 @@
     </ClInclude>
     <ClInclude Include="vdbuffers.h">
       <Filter>Header Files\Buffering</Filter>
+    </ClInclude>
+    <ClInclude Include="vobject.h">
+      <Filter>Header Files\Object</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

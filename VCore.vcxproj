@@ -28,6 +28,7 @@
     <ClInclude Include="ventriesformatted.h" />
     <ClInclude Include="vfileio.h" />
     <ClInclude Include="vlock.h" />
+    <ClInclude Include="vobject.h" />
     <ClInclude Include="vstructs.h" />
     <ClInclude Include="vtypes.h" />
   </ItemGroup>

@@ -67,7 +67,7 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	}
 	else
 	{
-		vMemCopy(buffer->name, bufferName, strlen(bufferName));
+		vMemCopy(buffer->name, bufferName, min(BUFF_SMALL - 1, strlen(bufferName)));
 	}
 
 	/* initialize element related data */

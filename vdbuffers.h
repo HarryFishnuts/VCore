@@ -10,7 +10,8 @@
 #include "vcore.h"
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize);
+VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize, 
+	vUI32 nodeSize);
 VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer);
 
 
