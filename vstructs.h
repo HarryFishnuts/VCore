@@ -127,7 +127,7 @@ typedef struct _vCoreInternals
 	vCHAR  stringBuffer[BUFF_LARGE];	/* pre-allocated string buffer	*/
 	vTIME  initializationTime;			/* time initialized in msecs	*/
 
-	vUI64 memoryUseage;					/* bytes alloced by vAlloc		*/
+	vUI64 memoryUseage;					/* bytes on heap				*/
 
 	vEntryBuffer entryBuffer;			/* entry system container		*/
 

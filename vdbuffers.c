@@ -4,7 +4,6 @@
 
 /* ========== INCLUDES							==========	*/
 #include "vdbuffers.h"
-#include <stdio.h>
 #include <intrin.h>
 
 
@@ -29,16 +28,16 @@ static __forceinline vPDBufferNode vhCreateBufferNode(vPDBuffer parent)
 {
 	EnterCriticalSection(&parent->rwPermission);
 
+	vUI64 nodeSize = sizeof(vDBufferNode);
+	vUI64 useFieldSize = ((DBUFFER_NODE_CAPACITY >> 0x06) + 1) * sizeof(vUI64);
+	vUI64 blockSize = DBUFFER_NODE_CAPACITY * parent->elementSizeBytes;
+
 	/* alloc node to heap */
-	vPDBufferNode node = vAllocZeroed(sizeof(vDBufferNode));
+	vPDBufferNode node = vAllocZeroed(nodeSize + useFieldSize + blockSize);
 
-	printf("CREATED NEW: %p\n", node);
-
-	/* setup node members */
 	node->parent   = parent;
-	int useFieldChunkCount = (DBUFFER_NODE_CAPACITY >> 0x03) + 1;
-	node->useField = vAllocZeroed(useFieldChunkCount * sizeof(vPUI64));
-	node->block    = vAllocZeroed(DBUFFER_NODE_CAPACITY * parent->elementSizeBytes);
+	node->useField = (vPBYTE)(node) + nodeSize;
+	node->block =    (vPBYTE)(node->useField) + useFieldSize;
 
 	LeaveCriticalSection(&parent->rwPermission);
 
@@ -49,11 +48,7 @@ static __forceinline void vhDestroyBufferNode(vPDBufferNode node)
 {
 	EnterCriticalSection(&node->parent->rwPermission);
 
-	printf("node: %p\n", (vPBYTE)node - 8);
-	printf("block: %p\n", (vPBYTE)(node->block) - 8);
-	vFree(node->block);
-	vFree(node->useField); puts("freed field");
-	vFree(node); puts("freed node");
+	vFree(node);
 
 	LeaveCriticalSection(&node->parent->rwPermission);
 }
@@ -193,23 +188,6 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 	vPDBuffer buffer = _vcore.dbuffers + dBuffer;
 
 	vDBufferLock(dBuffer); /* SYNC */
-
-	/* first, try last node */
-	vUI32 freeIndex = vhFindFreeBufferNodeIndex(buffer->tail);
-	if (freeIndex != ~0)
-	{
-		/* on valid index, return PTR */
-		vPBYTE element = (vPBYTE)(buffer->tail->block) + ((buffer->elementSizeBytes) * freeIndex);
-		vZeroMemory(element, buffer->elementSizeBytes);
-		buffer->elementCount++;
-
-		vDBufferUnlock(dBuffer); /* UNSYNC */
-
-		return element;
-	}
-
-	/* IF THE LAST NODE IS FULL, TRY ALL PREVIOUS NODES.	*/
-	/* IF ALL ARE FULL, THEN CREATE A NEW NODE				*/
 
 	/* try add to each node */
 	vPDBufferNode currentNode = buffer->head;

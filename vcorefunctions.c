@@ -182,38 +182,37 @@ VAPI void vCoreCrash(void)
 /* ========== ALLOCATION						==========	*/
 VAPI vPTR vAlloc(size_t size)
 {
-	vPTR block = HeapAlloc(_vcore.heap, NO_FLAGS, size + sizeof(vUI64));
+	vPTR block = HeapAlloc(_vcore.heap, NO_FLAGS, size);
 
 	if (block == NULL) vCoreFatalError(__func__,
 		"Could not allocate more memory.");
 
 	_vcore.memoryUseage += size;
-	*(vUI64*)block = size;
 
-	return (vPBYTE)block + sizeof(vUI64);
+	return block;
 }
 
 VAPI vPTR vAllocZeroed(size_t size)
 {
-	vPTR block = HeapAlloc(_vcore.heap, NO_FLAGS, size + sizeof(vUI64));
+	vPTR block = HeapAlloc(_vcore.heap, NO_FLAGS, size);
 
 	if (block == NULL) vCoreFatalError(__func__,
 		"Could not allocate more memory.");
-	vhZeroMemory((vPBYTE)block + sizeof(vUI64), size);
+	vhZeroMemory(block, size);
 
-	*(vUI64*)block = size;
 	_vcore.memoryUseage += size;
 
-	return (vPBYTE)block + sizeof(vUI64);
+	return block;
 }
 
 VAPI void vFree(vPTR ptr)
 {
-	vPUI16 blockBase = (vPBYTE)ptr - sizeof(vUI64);
-	_vcore.memoryUseage -= *blockBase;
-	BOOL result = HeapFree(_vcore.heap, NO_FLAGS, blockBase);
+	vUI64 freeSize = HeapSize(_vcore.heap, NO_FLAGS, ptr);
+	BOOL result = HeapFree(_vcore.heap, NO_FLAGS, ptr);
 	if (result == FALSE) vCoreFatalError(__func__,
 		"Could not free memory.");
+
+	_vcore.memoryUseage -= freeSize;
 }
 
 VAPI vUI64 vGetMemoryUseage(void)
