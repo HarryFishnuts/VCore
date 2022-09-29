@@ -113,17 +113,49 @@ typedef struct vDBuffer
 } vDBuffer, *vPDBuffer;
 
 
-/* ========== VOBJECT							==========	*/
-typedef struct vObjectAttribute
+/* ========== vCOMPONENT						==========	*/
+typedef struct vComponentDescriptor
 {
-	vCHAR attributeName[BUFF_SMALL];
+	vCHAR componentName [BUFF_SMALL];
+	vUI16 descriptorHandle;	/* generated when registered */
 
-	vUI64 staticAttributeSizeByte;		/* attribute shared between all objects */
-	vUI64 objectAttributeSizeBytes;		/* attribute unique to each object		*/
+	vUI64 staticAttributeSize; /* static attribute	*/
+	vPTR  staticAttribute;
 
-	CRITICAL_SECTION staticLock;	/* static r/w synchronization object	*/
-	vPTR staticAttribute;			/* ptr to static attribute memory		*/
-} vObjectAttribute, *vPObjectAttribute;
+	vUI64 objectAttributeSize; /* object attribute	*/
+} vComponentDescriptor, *vPComponentDescriptor;
+
+typedef struct vComponent
+{
+	CRITICAL_SECTION lock;
+
+	vUI16 componentDescriptorHandle;
+	vPTR  staticAttribute;
+	vPTR  objectAttribute;
+} vComponent, *vPComponent;
+
+
+/* ========== VOBJECT AND RELATED				==========	*/
+typedef struct vPosition
+{
+	float x;
+	float y;
+} vPosition, *vPPosition;
+
+typedef struct vTransform
+{
+	vPosition position;
+	float rotation;
+	float scale;
+} vTransform, *vPTransform;
+
+typedef struct vObject
+{
+	struct vObject* parent;	/* object parent	*/
+	vTransform transform;   /* object transform	*/
+
+	vComponent components[VOBJECT_MAX_COMPONENTS];
+} vObject, vPObject;
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/
@@ -150,6 +182,9 @@ typedef struct _vCoreInternals
 	vDBuffer dbuffers[MAX_DBUFFERS];	/* dynamic buffer list			*/
 
 	CRITICAL_SECTION locks[MAX_LOCKS];	/* lock buffer					*/
+
+	/* components list */
+	vComponentDescriptor components[COMPONENTS_MAX];
 
 } _vCoreInternals, *_vPCoreInternals;
 

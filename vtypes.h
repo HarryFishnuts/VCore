@@ -54,5 +54,8 @@ typedef vTIME* vPTIME;
 typedef void (*vPFBUFFERITERATEFUNC)(vHNDL buffer, vUI16 index, vPTR element);
 typedef void (*vPFDBUFFERITERATEFUNC)(vHNDL dbuffer, vPTR element);
 
+typedef void (*vPFDCOMPONENTINITIALIZATION)(vPComponent component);
+typedef void (*vPFDCOMPONENTDESTRUCTION)(vPComponent component);
+
 
 #endif
