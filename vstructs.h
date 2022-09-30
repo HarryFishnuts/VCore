@@ -169,10 +169,12 @@ typedef struct vObject
 {
 	struct vObject* parent;	/* object parent	*/
 	vTransform transform;   /* object transform	*/
+	CRITICAL_SECTION lock;  /* sync object		*/
 
-	CRITICAL_SECTION componentLock; /* component lock */
+	/* components */
 	vComponent components[VOBJECT_MAX_COMPONENTS];
 } vObject, *vPObject;
+
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/

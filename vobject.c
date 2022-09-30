@@ -7,7 +7,7 @@
 
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-vPosition  vCreatePosition(float x, float y)
+VAPI vPosition  vCreatePosition(float x, float y)
 {
 	vPosition rPos;
 	rPos.x = x;
@@ -15,7 +15,7 @@ vPosition  vCreatePosition(float x, float y)
 	return rPos;
 }
 
-vTransform vCreateTransform(vPosition pos, float r, float s)
+VAPI vTransform vCreateTransform(vPosition pos, float r, float s)
 {
 	vTransform transform;
 	transform.position = pos;
@@ -24,22 +24,24 @@ vTransform vCreateTransform(vPosition pos, float r, float s)
 	return transform;
 }
 
-vPObject   vCreateObject(vTransform transform, vPObject parent)
+VAPI vPObject   vCreateObject(vTransform transform, vPObject parent)
 {
 	vDBufferLock(_vcore.objects);
 
 	vPObject object = vDBufferAdd(_vcore.objects);
-	InitializeCriticalSection(&object->componentLock);
+	InitializeCriticalSection(&object->lock);
 	object->transform = transform;
 	object->parent = parent;
 
 	vDBufferUnlock(_vcore.objects);
 }
 
-void       vDestroyObject(vPObject object)
+VAPI void       vDestroyObject(vPObject object)
 {
 	vDBufferLock(_vcore.objects);
-
+	
+	EnterCriticalSection(&object->lock);
+	DeleteCriticalSection(&object->lock);
 	vDBufferRemove(_vcore.objects, object);
 
 	vDBufferUnlock(_vcore.objects);
@@ -47,7 +49,7 @@ void       vDestroyObject(vPObject object)
 
 
 /* ========== COMPONENT CREATION				==========	*/
-vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
+VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 	vPFCOMPONENTINITIALIZATIONSTATIC staticInitialization,
 	vPFCOMPONENTINITIALIZATION initialization, vPFCOMPONENTDESTRUCTION destruction)
 {
@@ -96,7 +98,7 @@ vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 	vCoreFatalError(__func__, "Could not create more components. Max components have been created.");
 }
 
-vUI16 vComponentGetHandleByName(vPCHAR name)
+VAPI vUI16 vComponentGetHandleByName(vPCHAR name)
 {
 	vCoreLock();
 
@@ -116,7 +118,7 @@ vUI16 vComponentGetHandleByName(vPCHAR name)
 	return 0;
 }
 
-vBOOL vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLength)
+VAPI vBOOL vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLength)
 {
 	vCoreLock();
 
@@ -141,26 +143,48 @@ vBOOL vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLen
 	return 0;
 }
 
-vPTR  vComponentGetStaticPtr(vUI16 component)
+VAPI vPTR  vComponentGetStaticPtr(vUI16 component)
 {
 	return _vcore.components[component].staticAttribute;
 }
 
-vPComponentDescriptor vComponentGetDescriptor(vUI16 component)
+VAPI vPComponentDescriptor vComponentGetDescriptor(vUI16 component)
 {
 	return _vcore.components + component;
 }
 
 
+/* ========== OBJECT SYNCHRONIZATION			==========	*/
+VAPI void vObjectLockAll(void)
+{
+	vDBufferLock(_vcore.objects);
+}
+
+VAPI void vObjectUnlockAll(void)
+{
+	vDBufferUnlock(_vcore.objects);
+}
+
+VAPI void vObjectLock(vPObject object)
+{
+	EnterCriticalSection(&object->lock);
+}
+
+VAPI void vObjectUnlock(vPObject object)
+{
+	LeaveCriticalSection(&object->lock);
+}
+
+
 /* ========== OBJECT COMPONENT MANIPULATION		==========	*/
-vBOOL vObjectAddComponent(vPObject object, vUI16 component)
+VAPI vBOOL vObjectAddComponent(vPObject object, vUI16 component)
 {
 	/* don't add if already existing */
 	if (vObjectHasComponent(object, component)) return FALSE;
 
 	vPComponentDescriptor desc = _vcore.components + component;
 
-	EnterCriticalSection(&object->componentLock);
+	EnterCriticalSection(&object->lock);
 
 	for (int i = 0; i < VOBJECT_MAX_COMPONENTS; i++)
 	{
@@ -177,21 +201,21 @@ vBOOL vObjectAddComponent(vPObject object, vUI16 component)
 		if (desc->objectInitFunc)
 			desc->objectInitFunc(object, comp);
 		
-		LeaveCriticalSection(&object->componentLock);
+		LeaveCriticalSection(&object->lock);
 		return TRUE;
 	}
 
 	vLogWarningFormatted(__func__, "Cannot add any more components to object '%p'.",
 		object);
-	LeaveCriticalSection(&object->componentLock);
+	LeaveCriticalSection(&object->lock);
 	return FALSE;
 }
 
-vBOOL vObjectRemoveComponent(vPObject object, vUI16 component)
+VAPI vBOOL vObjectRemoveComponent(vPObject object, vUI16 component)
 {
 	vPComponentDescriptor desc = _vcore.components + component;
 
-	EnterCriticalSection(&object->componentLock);
+	EnterCriticalSection(&object->lock);
 
 	for (int i = 0; i < VOBJECT_MAX_COMPONENTS; i++)
 	{
@@ -213,19 +237,19 @@ vBOOL vObjectRemoveComponent(vPObject object, vUI16 component)
 		/* zero component memory */
 		vZeroMemory(comp, sizeof(vComponent));
 
-		LeaveCriticalSection(&object->componentLock);
+		LeaveCriticalSection(&object->lock);
 		return TRUE;
 	}
 
 	vLogWarningFormatted(__func__, "Could not remove component '%d' from object '%p'.",
 		component, object);
-	LeaveCriticalSection(&object->componentLock);
+	LeaveCriticalSection(&object->lock);
 	return FALSE;
 }
 
-vBOOL vObjectHasComponent(vPObject object, vUI16 component)
+VAPI vBOOL vObjectHasComponent(vPObject object, vUI16 component)
 {
-	EnterCriticalSection(&object->componentLock);
+	EnterCriticalSection(&object->lock);
 
 	for (int i = 0; i < VOBJECT_MAX_COMPONENTS; i++)
 	{
@@ -238,17 +262,17 @@ vBOOL vObjectHasComponent(vPObject object, vUI16 component)
 		if (comp->componentDescriptorHandle != component) continue;
 		
 		/* on match, return true */
-		LeaveCriticalSection(&object->componentLock);
+		LeaveCriticalSection(&object->lock);
 		return TRUE;
 	}
 
-	LeaveCriticalSection(&object->componentLock);
+	LeaveCriticalSection(&object->lock);
 	return FALSE;
 }
 
-vPComponent vObjectGetComponent(vPObject object, vUI16 component)
+VAPI vPComponent vObjectGetComponent(vPObject object, vUI16 component)
 {
-	EnterCriticalSection(&object->componentLock);
+	EnterCriticalSection(&object->lock);
 
 	for (int i = 0; i < VOBJECT_MAX_COMPONENTS; i++)
 	{
@@ -261,10 +285,10 @@ vPComponent vObjectGetComponent(vPObject object, vUI16 component)
 		if (comp->componentDescriptorHandle != component) continue;
 
 		/* on match, return ptr */
-		LeaveCriticalSection(&object->componentLock);
+		LeaveCriticalSection(&object->lock);
 		return comp;
 	}
 
-	LeaveCriticalSection(&object->componentLock);
+	LeaveCriticalSection(&object->lock);
 	return NULL;
 }
