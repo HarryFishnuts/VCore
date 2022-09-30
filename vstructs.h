@@ -102,14 +102,17 @@ typedef struct vDBuffer
 {
 	vBOOL inUse;
 
-	CRITICAL_SECTION rwPermission;
+	CRITICAL_SECTION rwPermission;	/* sync object */
 
+	/* element init and destroy callbacks */
 	vPFDBUFFERINITIALIZEELEMENT initializeFunc;
 	vPFDBUFFERDESTROYELEMENT	destroyFunc;
 
+	/* misc labelling data */
 	vTIME timeCreated;
 	vCHAR name[BUFF_SMALL];
 
+	/* internal layout descriptors */
 	vUI32 nodeSize;
 
 	vUI64 elementSizeBytes;

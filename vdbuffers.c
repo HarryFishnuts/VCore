@@ -93,7 +93,8 @@ static __forceinline vUI32 vhFindFreeBufferNodeIndex(vPDBufferNode node)
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
 VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize,
-	vUI32 nodeSize)
+	vUI32 nodeSize, vPFDBUFFERINITIALIZEELEMENT initializeFunc,
+	vPFDBUFFERDESTROYELEMENT destroyFunc)
 {
 	vCoreLock(); /* SYNC */
 
@@ -118,6 +119,10 @@ VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize,
 	dBuffer->nodeSize = nodeSize;
 	vCoreTime(&dBuffer->timeCreated);
 	InitializeCriticalSection(&dBuffer->rwPermission);
+
+	/* setup callbacks */
+	dBuffer->initializeFunc = initializeFunc;
+	dBuffer->destroyFunc    = destroyFunc;
 
 	/* setup first node */
 	dBuffer->head = vhCreateBufferNode(dBuffer);
@@ -225,6 +230,10 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 		vZeroMemory(element, buffer->elementSizeBytes);
 		buffer->elementCount++;
 
+		/* call initialization func (if exists) */
+		if (buffer->initializeFunc)
+			buffer->initializeFunc(dBuffer, element);
+
 		vDBufferUnlock(dBuffer); /* UNSYNC */
 
 		return element;
@@ -250,6 +259,10 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 			(vPBYTE)element <= (vPBYTE)node->block + 
 			(buffer->elementSizeBytes * buffer->nodeSize))
 		{
+			/* call destruction func (if exists) */
+			if (buffer->destroyFunc)
+				buffer->destroyFunc(dBuffer, element);
+
 			/* get index using ptr math */
 			vUI32 nodeIndex = ((vPBYTE)element - (vPBYTE)node->block) / buffer->elementSizeBytes;
 
