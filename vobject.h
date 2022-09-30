@@ -18,8 +18,8 @@ void       vDestroyObject(vPObject object);
 
 
 /* ========== COMPONENT CREATION				==========	*/
-vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize);
-vUI16 vCreateComponentEX(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
+vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
+	vPFDCOMPONENTINITIALIZATIONSTATIC staticInitialization,
 	vPFDCOMPONENTINITIALIZATION initialization, vPFDCOMPONENTDESTRUCTION destruction);
 vUI16 vComponentGetHandleByName(vPCHAR name);
 void  vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLength);

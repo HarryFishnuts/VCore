@@ -50,8 +50,9 @@ static __forceinline vPBuffer vhGetBufferLocked(vHNDL bufHndl)
 }
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
-	vUI16 capacity)
+VAPI vHNDL CreateBuffer(const char* bufferName, vUI16 elementSize,
+	vUI16 capacity, vPFBUFFERINITIALIZEELEMENT initializeFunc,
+	vPFBUFFERDESTROYELEMENT destroyFunc)
 {
 	/* SYNC		*/ vCoreLock();
 
@@ -83,6 +84,10 @@ VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	buffer->useField		= vAllocZeroed(sizeof(vUI64) * buffer->useFieldLength);
 	buffer->data			= vAllocZeroed(buffer->sizeBytes);
 
+	/* setup callbacks */
+	buffer->initializeFunc = initializeFunc;
+	buffer->destroyFunc    = destroyFunc;
+
 	/* log buffer creation */
 	vLogInfoFormatted(__func__,
 		"Buffer '%s' created with "
@@ -108,6 +113,12 @@ VAPI vBOOL vDestroyBuffer(vHNDL buffHndl)
 
 	/* wait for buffer to finish */
 	vBufferLock(buffHndl);
+
+	/* destroy all elements */
+	for (int i = 0; i < buffer->capacity; i++)
+	{
+		vBufferRemoveIndex(buffHndl, i);
+	}
 
 	/* free all memory */
 	vFree(buffer->data);
@@ -169,6 +180,10 @@ VAPI vPTR  vBufferAdd(vHNDL buffHndl)
 		vPTR elemPtr = buff->data + (indexActual * buff->elementSizeBytes);
 		vZeroMemory(elemPtr, buff->elementSizeBytes);
 
+		/* call initialization callback if it exists */
+		if (buff->initializeFunc)
+			buff->initializeFunc(buffHndl, indexActual, elemPtr);
+
 		/* UNSYNC	*/ vBufferUnlock(buffHndl);
 		
 		return elemPtr;
@@ -197,6 +212,10 @@ VAPI void  vBufferRemove(vHNDL buffHndl, vPTR element)
 	}
 	else
 	{
+		/* call destruction function (if exists) */
+		if (buff->destroyFunc)
+			buff->destroyFunc(buffHndl, elementIndex, element);
+
 		/* reset bit and decrement use count */
 		_bittestandreset64(&buff->useField[chunk], bit);
 		buff->elementsUsed--;
@@ -221,6 +240,11 @@ VAPI void  vBufferRemoveIndex(vHNDL buffHndl, vUI16 index)
 	}
 	else
 	{
+		/* call destruction function (if exists) */
+		if (buff->destroyFunc)
+			buff->destroyFunc(buffHndl, index, 
+				(vPBYTE)buff->data + (index * buff->elementSizeBytes));
+
 		/* reset bit and decrement use count */
 		_bittestandreset64(&buff->useField[chunk], bit);
 		buff->elementsUsed--;

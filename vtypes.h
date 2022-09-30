@@ -54,8 +54,18 @@ typedef vTIME* vPTIME;
 typedef void (*vPFBUFFERITERATEFUNC)(vHNDL buffer, vUI16 index, vPTR element);
 typedef void (*vPFDBUFFERITERATEFUNC)(vHNDL dbuffer, vPTR element);
 
-typedef void (*vPFDCOMPONENTINITIALIZATION)(vPComponent component);
-typedef void (*vPFDCOMPONENTDESTRUCTION)(vPComponent component);
+typedef void (*vPFBUFFERINITIALIZEELEMENT)(vHNDL buffer, vUI16 index, vPTR element);
+typedef void (*vPFDBUFFERINITIALIZEELEMENT)(vHNDL dbuffer, vPTR element);
+
+typedef void (*vPFBUFFERDESTROYELEMENT)(vHNDL buffer, vUI16 index, vPTR element);
+typedef void (*vPFDBUFFERDESTROYELEMENT)(vHNDL dbuffer, vPTR element);
+
+typedef void (*vPFDCOMPONENTINITIALIZATIONSTATIC)(struct vComponentDescriptor* descriptor,
+	vPTR staticData);
+typedef void (*vPFDCOMPONENTINITIALIZATION)(struct vObject* object, 
+	struct vComponent* component);
+typedef void (*vPFDCOMPONENTDESTRUCTION)(struct vObject* object, 
+	struct vComponent* component);
 
 
 #endif

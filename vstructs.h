@@ -52,6 +52,10 @@ typedef struct vBuffer
 	vTIME timeCreated;
 	vCHAR name[BUFF_SMALL];
 
+	/* element initialization and destruction callbacks */
+	vPFBUFFERINITIALIZEELEMENT	initializeFunc;
+	vPFBUFFERDESTROYELEMENT		destroyFunc;
+
 	vUI16 elementSizeBytes;			/* size of each element					*/
 	vUI16 capacity;					/* max amount of elements storable		*/
 	vUI32 sizeBytes;				/* data size in bytes					*/
@@ -99,6 +103,9 @@ typedef struct vDBuffer
 	vBOOL inUse;
 
 	CRITICAL_SECTION rwPermission;
+
+	vPFDBUFFERINITIALIZEELEMENT initializeFunc;
+	vPFDBUFFERDESTROYELEMENT	destroyFunc;
 
 	vTIME timeCreated;
 	vCHAR name[BUFF_SMALL];
