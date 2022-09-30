@@ -126,6 +126,8 @@ typedef struct vDBuffer
 /* ========== vCOMPONENT						==========	*/
 typedef struct vComponentDescriptor
 {
+	vBOOL inUse;	/* use flag */
+
 	vCHAR componentName [BUFF_SMALL];
 	vUI16 descriptorHandle;	/* generated when registered */
 
@@ -133,12 +135,16 @@ typedef struct vComponentDescriptor
 	vPTR  staticAttribute;
 
 	vUI64 objectAttributeSize; /* object attribute	*/
+
+	/* callbacks */
+	vPFCOMPONENTINITIALIZATIONSTATIC staticInitFunc;
+	vPFCOMPONENTINITIALIZATION		 objectInitFunc;
+	vPFCOMPONENTDESTRUCTION			 objectDestroyFunc;
+
 } vComponentDescriptor, *vPComponentDescriptor;
 
 typedef struct vComponent
 {
-	CRITICAL_SECTION lock;
-
 	vUI16 componentDescriptorHandle;
 	vPTR  staticAttribute;
 	vPTR  objectAttribute;
@@ -164,8 +170,9 @@ typedef struct vObject
 	struct vObject* parent;	/* object parent	*/
 	vTransform transform;   /* object transform	*/
 
+	CRITICAL_SECTION componentLock; /* component lock */
 	vComponent components[VOBJECT_MAX_COMPONENTS];
-} vObject, vPObject;
+} vObject, *vPObject;
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/
@@ -192,6 +199,9 @@ typedef struct _vCoreInternals
 	vDBuffer dbuffers[MAX_DBUFFERS];	/* dynamic buffer list			*/
 
 	CRITICAL_SECTION locks[MAX_LOCKS];	/* lock buffer					*/
+
+	/* object dynamic buffer */
+	vHNDL objects;
 
 	/* components list */
 	vComponentDescriptor components[COMPONENTS_MAX];

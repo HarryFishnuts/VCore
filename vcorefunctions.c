@@ -81,6 +81,10 @@ VAPI vBOOL vCoreInitialize(void)
 		*(DWORD*)&_vcore.locks[i] = UNUSED_LOCK;
 	}
 
+	/* create object buffer */
+	_vcore.objects = vCreateDBuffer("VCore Object Dynamic Buffer",
+		sizeof(vObject), 0x400, NULL, NULL);
+
 	/* log startup */
 	vLogInfo(__func__, "VCore initialized.");
 

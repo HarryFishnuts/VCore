@@ -49,6 +49,9 @@
     <Filter Include="Header Files\Object">
       <UniqueIdentifier>{e41b99fa-11db-4418-acc8-d3260fbd3a72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Object">
+      <UniqueIdentifier>{8525b011-21be-4286-8a53-47135557a8d7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -109,6 +112,9 @@
     </ClCompile>
     <ClCompile Include="vdbuffers.c">
       <Filter>Source Files\Buffering</Filter>
+    </ClCompile>
+    <ClCompile Include="vobject.c">
+      <Filter>Source Files\Object</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

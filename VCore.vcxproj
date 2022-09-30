@@ -33,6 +33,7 @@
     <ClInclude Include="vtypes.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="vobject.c" />
     <ClCompile Include="vbuffers.c" />
     <ClCompile Include="vcorefunctions.c" />
     <ClCompile Include="vdbuffers.c" />

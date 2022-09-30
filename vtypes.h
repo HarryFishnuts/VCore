@@ -60,11 +60,11 @@ typedef void (*vPFDBUFFERINITIALIZEELEMENT)(vHNDL dbuffer, vPTR element);
 typedef void (*vPFBUFFERDESTROYELEMENT)(vHNDL buffer, vUI16 index, vPTR element);
 typedef void (*vPFDBUFFERDESTROYELEMENT)(vHNDL dbuffer, vPTR element);
 
-typedef void (*vPFDCOMPONENTINITIALIZATIONSTATIC)(struct vComponentDescriptor* descriptor,
+typedef void (*vPFCOMPONENTINITIALIZATIONSTATIC)(struct vComponentDescriptor* descriptor,
 	vPTR staticData);
-typedef void (*vPFDCOMPONENTINITIALIZATION)(struct vObject* object, 
+typedef void (*vPFCOMPONENTINITIALIZATION)(struct vObject* object, 
 	struct vComponent* component);
-typedef void (*vPFDCOMPONENTDESTRUCTION)(struct vObject* object, 
+typedef void (*vPFCOMPONENTDESTRUCTION)(struct vObject* object, 
 	struct vComponent* component);
 
 
