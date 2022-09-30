@@ -98,20 +98,28 @@ vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 
 vUI16 vComponentGetHandleByName(vPCHAR name)
 {
+	vCoreLock();
+
 	for (int i = 0; i < COMPONENTS_MAX; i++)
 	{
 		vPComponentDescriptor compD = _vcore.components + i;
 		if (compD->inUse == FALSE) continue;
 
-		if (strcmp(name, compD->componentName) == 0) return i;
+		if (strcmp(name, compD->componentName) != 0) continue;
+
+		vCoreUnlock();
+		return i;
 	}
 
 	/* return 0 on fail */
+	vCoreUnlock();
 	return 0;
 }
 
 vBOOL vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLength)
 {
+	vCoreLock();
+
 	for (int i = 0; i < COMPONENTS_MAX; i++)
 	{
 		vPComponentDescriptor compD = _vcore.components + i;
@@ -122,11 +130,14 @@ vBOOL vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLen
 		{
 			int copyAmountBytes = min(strlen(compD->componentName), bufferLength);
 			vMemCopy(nameBuffer, compD->componentName, copyAmountBytes);
+
+			vCoreUnlock();
 			return copyAmountBytes;
 		}
 	}
 
 	/* return 0 on fail */
+	vCoreUnlock();
 	return 0;
 }
 
@@ -144,6 +155,9 @@ vPComponentDescriptor vComponentGetDescriptor(vUI16 component)
 /* ========== OBJECT COMPONENT MANIPULATION		==========	*/
 vBOOL vObjectAddComponent(vPObject object, vUI16 component)
 {
+	/* don't add if already existing */
+	if (vObjectHasComponent(object, component)) return FALSE;
+
 	vPComponentDescriptor desc = _vcore.components + component;
 
 	EnterCriticalSection(&object->componentLock);
