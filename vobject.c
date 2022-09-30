@@ -34,6 +34,8 @@ VAPI vPObject   vCreateObject(vTransform transform, vPObject parent)
 	object->parent = parent;
 
 	vDBufferUnlock(_vcore.objects);
+
+	return object;
 }
 
 VAPI void       vDestroyObject(vPObject object)
@@ -85,6 +87,10 @@ VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 
 		/* mark component descriptor as used */
 		compD->inUse = TRUE;
+
+		vLogInfoFormatted(__func__, "Created Component '%s' "
+			"with static size %d and object size %d.", compD->componentName,
+			compD->staticAttributeSize, compD->objectAttributeSize);
 
 		vCoreUnlock();
 
@@ -155,12 +161,12 @@ VAPI vPComponentDescriptor vComponentGetDescriptor(vUI16 component)
 
 
 /* ========== OBJECT SYNCHRONIZATION			==========	*/
-VAPI void vObjectLockAll(void)
+VAPI void vObjectGlobalLock(void)
 {
 	vDBufferLock(_vcore.objects);
 }
 
-VAPI void vObjectUnlockAll(void)
+VAPI void vObjectGlobalUnlock(void)
 {
 	vDBufferUnlock(_vcore.objects);
 }
@@ -177,7 +183,7 @@ VAPI void vObjectUnlock(vPObject object)
 
 
 /* ========== OBJECT COMPONENT MANIPULATION		==========	*/
-VAPI vBOOL vObjectAddComponent(vPObject object, vUI16 component)
+VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component)
 {
 	/* don't add if already existing */
 	if (vObjectHasComponent(object, component)) return FALSE;
@@ -202,13 +208,13 @@ VAPI vBOOL vObjectAddComponent(vPObject object, vUI16 component)
 			desc->objectInitFunc(object, comp);
 		
 		LeaveCriticalSection(&object->lock);
-		return TRUE;
+		return comp;
 	}
 
 	vLogWarningFormatted(__func__, "Cannot add any more components to object '%p'.",
 		object);
 	LeaveCriticalSection(&object->lock);
-	return FALSE;
+	return NULL;
 }
 
 VAPI vBOOL vObjectRemoveComponent(vPObject object, vUI16 component)
@@ -255,8 +261,8 @@ VAPI vBOOL vObjectHasComponent(vPObject object, vUI16 component)
 	{
 		vPComponent comp = object->components + i;
 
-		/* if used, skip */
-		if (comp->objectAttribute != NULL) continue;
+		/* if unused, skip */
+		if (comp->objectAttribute == NULL) continue;
 
 		/* if not matching skip */
 		if (comp->componentDescriptorHandle != component) continue;
@@ -291,4 +297,21 @@ VAPI vPComponent vObjectGetComponent(vPObject object, vUI16 component)
 
 	LeaveCriticalSection(&object->lock);
 	return NULL;
+}
+
+VAPI vUI32 vObjectGetComponentCount(vPObject object)
+{
+	EnterCriticalSection(&object->lock);
+
+	vUI32 counter = 0;
+	for (int i = 0; i < VOBJECT_MAX_COMPONENTS; i++)
+	{
+		vPComponent comp = object->components + i;
+
+		/* if used, increment counter */
+		if (comp->objectAttribute != NULL) counter++;
+	}
+
+	LeaveCriticalSection(&object->lock);
+	return counter;
 }

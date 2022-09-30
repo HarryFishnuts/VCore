@@ -28,17 +28,18 @@ VAPI vPComponentDescriptor vComponentGetDescriptor(vUI16 component);
 
 
 /* ========== OBJECT SYNCHRONIZATION			==========	*/
-VAPI void vObjectLockAll(void);
-VAPI void vObjectUnlockAll(void);
+VAPI void vObjectGlobalLock(void);
+VAPI void vObjectGlobalUnlock(void);
 VAPI void vObjectLock(vPObject object);
 VAPI void vObjectUnlock(vPObject object);
 
 
 /* ========== OBJECT COMPONENT MANIPULATION		==========	*/
-VAPI vBOOL vObjectAddComponent(vPObject object, vUI16 component);
+VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component);
 VAPI vBOOL vObjectRemoveComponent(vPObject object, vUI16 component);
 VAPI vBOOL vObjectHasComponent(vPObject object, vUI16 component);
 VAPI vPComponent vObjectGetComponent(vPObject object, vUI16 component);
+VAPI vUI32 vObjectGetComponentCount(vPObject object);
 
 
 #endif

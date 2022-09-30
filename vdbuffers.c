@@ -348,6 +348,8 @@ VAPI void vDBufferClear(vHNDL dBuffer)
 			/* set flag to unused */
 			_bittestandreset64(node->useField + chunk, bit);
 		}
+
+		node = node->next;
 	}
 
 	vDBufferUnlock(dBuffer);
