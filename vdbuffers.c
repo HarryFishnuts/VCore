@@ -152,6 +152,12 @@ VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer)
 		vLogError(__func__, "Tried to destroy dynamic buffer which doesn't exist.");
 		return FALSE;
 	}
+
+	/* lock buffer */
+	vDBufferLock(dBuffer);
+
+	/* clear buffer */
+	vDBufferClear(dBuffer);
 		
 	/* mark as destroyed */
 	buffer->inUse = FALSE;
@@ -323,14 +329,26 @@ VAPI void vDBufferClear(vHNDL dBuffer)
 	/* walk all nodes and set their fields to NULL */
 	while (node != NULL)
 	{
-		vZeroMemory(node->useField, 
-			(((vUI64)buffer->nodeSize >> 0x06) + 1) * sizeof(vUI64));
-		node->elementCount = 0;
-		node = node->next;
-	}
+		for (vUI64 i = 0; i < buffer->nodeSize; i++)
+		{
+			vUI64 chunk, bit;
+			vhMapIndexToUseField(i, &chunk, &bit);
 
-	/* set elementcount to 0 */
-	buffer->elementCount = 0;
+			/* if index is empty, skip */
+			if (_bittest64(node->useField + chunk, bit) == FALSE) continue;
+
+			/* get element pointer and destroy (if possible) */
+			vPBYTE element = (vPBYTE)node->block + (i * buffer->elementSizeBytes);
+			if (buffer->destroyFunc)
+				buffer->destroyFunc(dBuffer, element);
+
+			node->elementCount--;
+			buffer->elementCount--;
+			
+			/* set flag to unused */
+			_bittestandreset64(node->useField + chunk, bit);
+		}
+	}
 
 	vDBufferUnlock(dBuffer);
 }
