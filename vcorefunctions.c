@@ -83,7 +83,7 @@ VAPI vBOOL vCoreInitialize(void)
 
 	/* create object buffer */
 	_vcore.objects = vCreateDBuffer("VCore Object Dynamic Buffer",
-		sizeof(vObject), 0x400, NULL, NULL);
+		sizeof(vObject), VOBJECT_NODE_SIZE, NULL, NULL);
 
 	/* log startup */
 	vLogInfo(__func__, "VCore initialized.");

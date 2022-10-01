@@ -85,7 +85,7 @@ VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 		if (compD->inUse == TRUE) continue;
 
 		/* initialize descriptor members */
-		vMemCopy(compD->componentName, name, strlen(name));
+		vMemCopy(compD->componentName, name, min(BUFF_SMALL, strlen(name)));
 		compD->staticAttributeSize = staticSize;
 		compD->objectAttributeSize = objectSize;
 		compD->staticInitFunc = staticInitialization;
@@ -93,7 +93,7 @@ VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 		compD->objectDestroyFunc = destruction;
 		
 		/* allocate static block, do callback (if exists) */
-		compD->staticAttribute = vAllocZeroed(compD->staticAttributeSize);
+		compD->staticAttribute = vAllocZeroed(max(4, compD->staticAttributeSize));
 		if (compD->staticInitFunc)
 			compD->staticInitFunc(compD, compD->staticAttribute);
 
@@ -213,7 +213,7 @@ VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component)
 
 		comp->componentDescriptorHandle = component;
 		comp->staticAttribute = desc->staticAttribute;
-		comp->objectAttribute = vAllocZeroed(desc->objectAttributeSize);
+		comp->objectAttribute = vAllocZeroed(max(4, desc->objectAttributeSize));
 
 		/* call init callback if possible */
 		if (desc->objectInitFunc)

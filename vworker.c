@@ -117,7 +117,7 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 		sprintf_s(taskListNameBuffer, BUFF_SMALL, "Worker '%s' Taskbuffer",
 			worker->name);
 		worker->taskList = vCreateDBuffer(taskListNameBuffer, sizeof(vWorkerTaskData),
-			0x100, vhWorkerTaskListElementInitFunc, NULL);
+			WORKER_TASKLIST_NODE_SIZE, vhWorkerTaskListElementInitFunc, NULL);
 
 		/* prepare worker input */
 		vWorkerInput workerInput;
