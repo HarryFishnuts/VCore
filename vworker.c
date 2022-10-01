@@ -9,10 +9,17 @@
 
 
 /* ========== INTERNAL THREAD LOGIC				==========	*/
-static void vhWorkerTaskIterate(vHNDL buffer, vPWorkerTaskData taskData, vPWorker worker)
+static void vhWorkerTaskIterateFunc(vHNDL buffer, vPWorkerTaskData taskData, vPWorker worker)
 {
 	if (taskData->task)
 		taskData->task(worker, worker->persistentData, taskData->input);
+}
+
+static void vhWorkerTaskListElementInitFunc(vHNDL buffer, vPWorkerTaskData taskData, 
+	vPWorkerTaskData input)
+{
+	taskData->task  = input->task;
+	taskData->input = input->input;
 }
 
 static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
@@ -48,7 +55,7 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		}
 
 		/* complete all tasks */
-		vDBufferIterate(worker->taskList, vhWorkerTaskIterate, worker);
+		vDBufferIterate(worker->taskList, vhWorkerTaskIterateFunc, worker);
 		vDBufferClear(worker->taskList);
 
 		/* if thread is suspended, ignore cycle */
@@ -95,7 +102,7 @@ VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
 		sprintf_s(taskListNameBuffer, BUFF_SMALL, "Worker [%d] [%p] Taskbuffer",
 			i, worker);
 		worker->taskList = vCreateDBuffer(taskListNameBuffer, sizeof(vWorkerTaskData),
-			0x100, NULL, NULL);
+			0x100, vhWorkerTaskListElementInitFunc, NULL);
 
 		/* prepare worker input */
 		vWorkerInput workerInput;
@@ -116,18 +123,98 @@ VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
 	return NULL;
 }
 
-VAPI vBOOL vDestroyWorker(vPWorker worker);
+VAPI vBOOL vDestroyWorker(vPWorker worker)
+{
+	EnterCriticalSection(&worker->cycleLock);
+	_bittestandset64(&worker->workerState, 1);
+	LeaveCriticalSection(&worker->cycleLock);
+}
 
 
 /* ========== RUNTIME MANIPULATION				==========	*/
-VAPI void  vWorkerPause(vPWorker worker);
-VAPI void  vWorkerUnpause(vPWorker worker);
-VAPI vBOOL vWorkerIsPaused(vPWorker worker);
+VAPI void  vWorkerPause(vPWorker worker)
+{
+	EnterCriticalSection(&worker->cycleLock);
+	_bittestandset64(&worker->workerState, 0);
+	LeaveCriticalSection(&worker->cycleLock);
+}
+
+VAPI void  vWorkerUnpause(vPWorker worker)
+{
+	EnterCriticalSection(&worker->cycleLock);
+	_bittestandreset64(&worker->workerState, 0);
+	LeaveCriticalSection(&worker->cycleLock);
+}
+
+VAPI vBOOL vWorkerIsPaused(vPWorker worker)
+{
+	BOOLEAN state = FALSE;
+	EnterCriticalSection(&worker->cycleLock);
+	state = _bittest(&worker->workerState, 0);
+	LeaveCriticalSection(&worker->cycleLock);
+	return state;
+}
 
 
 /* ========== DISPATCH AND SYNCHRONIZATION		==========	*/
-VAPI vTIME vWorkerGetCycle(vPWorker worker);
-VAPI vTIME vWorkerDispatchLock(vPWorker worker);
-VAPI vTIME vWorkerDispatchUnlock(vPWorker worker);
-VAPI vTIME vWorkerDispatchTask(vPFWORKERTASK taskFunc, vPTR input);
-VAPI void  vWorkerWaitCycleCompletion(vTIME lastCycle, vTIME maxWaitTime);
+VAPI vTIME vWorkerGetCycle(vPWorker worker)
+{
+	vTIME cycle = 0;
+	EnterCriticalSection(&worker->cycleLock);
+	cycle = worker->cycleCount;
+	LeaveCriticalSection(&worker->cycleLock);
+	return cycle;
+}
+
+VAPI void  vWorkerLock(vPWorker worker)
+{
+	EnterCriticalSection(&worker->cycleLock);
+}
+
+VAPI void  vWorkerUnlock(vPWorker worker)
+{
+	LeaveCriticalSection(&worker->cycleLock);
+}
+
+VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR input)
+{
+	EnterCriticalSection(&worker->cycleLock);
+	
+	vWorkerTaskData taskData;
+	taskData.task  = taskFunc;
+	taskData.input = input;
+	vDBufferAdd(worker->taskList, &taskData);
+
+	LeaveCriticalSection(&worker->cycleLock);
+
+	return vWorkerGetCycle(worker);
+}
+
+VAPI vBOOL vWorkerWaitCycleCompletion(vPWorker worker, vTIME lastCycle, vTIME maxWaitTime)
+{
+	ULONGLONG startTime = GetTickCount64();
+
+	while (TRUE)
+	{
+		ULONGLONG currentTime = GetTickCount64();
+
+		/* on reached max time, return FALSE */
+		if (currentTime > startTime + maxWaitTime) return FALSE;
+
+		/* check the worker's current cycle number */
+		vTIME currentCycle = vWorkerGetCycle(worker);
+
+		/* if unfinished, sleep for interval and continue */
+		if (currentCycle < lastCycle + 1)
+		{
+			Sleep(worker->cycleIntervalMiliseconds);
+			continue;
+		}
+
+		/* on reached here, worker cycle is complete. break */
+		break;
+	}
+	
+	return TRUE;
+}
+

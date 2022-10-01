@@ -25,10 +25,10 @@ VAPI vBOOL vWorkerIsPaused(vPWorker worker);
 
 /* ========== DISPATCH AND SYNCHRONIZATION		==========	*/
 VAPI vTIME vWorkerGetCycle(vPWorker worker);
-VAPI vTIME vWorkerDispatchLock(vPWorker worker);
-VAPI vTIME vWorkerDispatchUnlock(vPWorker worker);
-VAPI vTIME vWorkerDispatchTask(vPFWORKERTASK taskFunc, vPTR input);
-VAPI void  vWorkerWaitCycleCompletion(vTIME lastCycle, vTIME maxWaitTime);
+VAPI void  vWorkerLock(vPWorker worker);
+VAPI void  vWorkerUnlock(vPWorker worker);
+VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR input);
+VAPI vBOOL vWorkerWaitCycleCompletion(vPWorker worker, vTIME lastCycle, vTIME maxWaitTime);
 
 
 #endif
