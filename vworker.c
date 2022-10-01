@@ -70,7 +70,11 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		vDBufferClear(worker->taskList);
 
 		/* if thread is suspended, ignore cycle */
-		if (_bittest64(&worker->workerState, 0) == TRUE) continue;
+		if (_bittest64(&worker->workerState, 0) == TRUE)
+		{
+			LeaveCriticalSection(&worker->cycleLock);
+			continue;
+		}
 
 		/* complete next cycle */
 		if (worker->cycleFunc)
