@@ -181,9 +181,17 @@ typedef struct vWorker
 {
 	HANDLE thread;			/* win32 thread */
 
+	/* state of worker.			*/
+	/* bit 0 -> paused/unpaused	*/
+	/* bit 1 -> exit flag		*/
+	vBYTE workerState;
+
 	/* persistent data */
 	vUI64 persistentDataSizeBytes;
 	vPTR  persistentData;
+
+	/* last time in milis that cycle was run */
+	vTIME lastCycleTime;
 
 	/* init and destruction callbacks */
 	vPFWORKERINIT initFunc;
@@ -205,6 +213,12 @@ typedef struct vWorkerInput
 	vPWorker worker;
 	vPTR     userInput;
 } vWorkerInput, *vPWorkerInput;
+
+typedef struct vWorkerTaskData
+{
+	vPFWORKERTASK task;
+	vPTR input;
+} vWorkerTaskData, *vPWorkerTaskData;
 
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/

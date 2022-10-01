@@ -9,6 +9,12 @@
 
 
 /* ========== INTERNAL THREAD LOGIC				==========	*/
+static void vhWorkerTaskIterate(vHNDL buffer, vPWorkerTaskData taskData, vPWorker worker)
+{
+	if (taskData->task)
+		taskData->task(worker, worker->persistentData, taskData->input);
+}
+
 static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 {
 	vPWorker worker = input->worker;
@@ -19,6 +25,43 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		worker->initFunc(worker, worker->persistentData, input->userInput);
 
 	/* start main loop */
+	while (TRUE)
+	{
+		/* LOCK THREAD */
+		EnterCriticalSection(&worker->cycleLock);
+
+		/* wait for interval to execute cycle */
+		ULONGLONG currentTime = GetTickCount64();
+		ULONGLONG nextCycleTime = worker->lastCycleTime + worker->cycleIntervalMiliseconds;
+		if (currentTime < nextCycleTime)
+		{
+			Sleep(nextCycleTime - currentTime);
+		}
+
+		/* check for kill signal */
+		if (_bittest64(&worker->workerState, 1) == TRUE)
+		{
+			if (worker->exitFunc)
+				worker->exitFunc(worker, worker->persistentData);
+
+			ExitThread(1);
+		}
+
+		/* complete all tasks */
+		vDBufferIterate(worker->taskList, vhWorkerTaskIterate, worker);
+		vDBufferClear(worker->taskList);
+
+		/* if thread is suspended, ignore cycle */
+		if (_bittest64(&worker->workerState, 0) == TRUE) continue;
+
+		/* complete next cycle */
+		worker->cycleFunc(worker, worker->persistentData);
+		worker->lastCycleTime = GetTickCount64();
+		worker->cycleCount++;
+
+		/* UNLOCK THREAD */
+		LeaveCriticalSection(&worker->cycleLock);
+	}
 }
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
@@ -51,7 +94,7 @@ VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
 		vZeroMemory(taskListNameBuffer, sizeof(taskListNameBuffer));
 		sprintf_s(taskListNameBuffer, BUFF_SMALL, "Worker [%d] [%p] Taskbuffer",
 			i, worker);
-		worker->taskList = vCreateDBuffer(taskListNameBuffer, sizeof(vPFWORKERTASK),
+		worker->taskList = vCreateDBuffer(taskListNameBuffer, sizeof(vWorkerTaskData),
 			0x100, NULL, NULL);
 
 		/* prepare worker input */

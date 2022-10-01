@@ -199,7 +199,7 @@ VAPI void vDBufferUnlock(vHNDL dBuffer)
 
 
 /* ========== ELEMENT MANIPULATION				==========	*/
-VAPI vPTR vDBufferAdd(vHNDL dBuffer)
+VAPI vPTR vDBufferAdd(vHNDL dBuffer, vPTR input)
 {
 	vPDBuffer buffer = _vcore.dbuffers + dBuffer;
 
@@ -238,7 +238,7 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer)
 
 		/* call initialization func (if exists) */
 		if (buffer->initializeFunc)
-			buffer->initializeFunc(dBuffer, element);
+			buffer->initializeFunc(dBuffer, element, input);
 
 		vDBufferUnlock(dBuffer); /* UNSYNC */
 
@@ -292,7 +292,7 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 	}
 }
 
-VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function)
+VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function, vPTR input)
 {
 	vDBufferLock(dBuffer);
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
@@ -310,7 +310,7 @@ VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function)
 			/* if unused, skip */
 			if (_bittest64(&node->useField[chunk], index) == FALSE) continue;
 
-			function(dBuffer, (vPBYTE)node->block + (i * buffer->elementSizeBytes));
+			function(dBuffer, (vPBYTE)node->block + (i * buffer->elementSizeBytes), input);
 		}
 
 		node = node->next;

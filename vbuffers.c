@@ -151,7 +151,7 @@ VAPI void vBufferUnlock(vHNDL buffer)
 
 
 /* ========== ELEMENT MANIPULATION				==========	*/
-VAPI vPTR  vBufferAdd(vHNDL buffHndl)
+VAPI vPTR  vBufferAdd(vHNDL buffHndl, vPTR input)
 {
 	/* get buffer */
 	vPBuffer buff = vhGetBufferLocked(buffHndl);
@@ -182,7 +182,7 @@ VAPI vPTR  vBufferAdd(vHNDL buffHndl)
 
 		/* call initialization callback if it exists */
 		if (buff->initializeFunc)
-			buff->initializeFunc(buffHndl, indexActual, elemPtr);
+			buff->initializeFunc(buffHndl, indexActual, elemPtr, input);
 
 		/* UNSYNC	*/ vBufferUnlock(buffHndl);
 		
@@ -278,7 +278,7 @@ VAPI vPTR  vBufferGetIndex(vHNDL buffer, vUI16 index)
 	return buff->data + (index * buff->elementSizeBytes);
 }
 
-VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
+VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function, vPTR input)
 {
 	if (function == NULL)
 	{
@@ -299,7 +299,7 @@ VAPI void  vBufferIterate(vHNDL buffHndl, vPFBUFFERITERATEFUNC function)
 
 		if (_bittest64(&buff->useField[chunk], bit) == FALSE) continue;
 
-		function(buffHndl, i, buff->data + (i * buff->elementSizeBytes));
+		function(buffHndl, i, buff->data + (i * buff->elementSizeBytes), input);
 		
 		/* once all active elements are processed, break */
 		if (runCount++ >= buff->elementsUsed)	break;

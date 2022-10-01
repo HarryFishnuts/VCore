@@ -22,9 +22,9 @@ VAPI void vDBufferUnlock(vHNDL dBuffer);
 
 
 /* ========== ELEMENT MANIPULATION				==========	*/
-VAPI vPTR vDBufferAdd(vHNDL dBuffer);
+VAPI vPTR vDBufferAdd(vHNDL dBuffer, vPTR input);
 VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element);
-VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function);
+VAPI void vDBufferIterate(vHNDL dBuffer, vPFDBUFFERITERATEFUNC function, vPTR input);
 VAPI void vDBufferClear(vHNDL dBuffer);
 
 

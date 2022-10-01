@@ -28,7 +28,7 @@ VAPI vPObject   vCreateObject(vTransform transform, vPObject parent)
 {
 	vDBufferLock(_vcore.objects);
 
-	vPObject object = vDBufferAdd(_vcore.objects);
+	vPObject object = vDBufferAdd(_vcore.objects, NULL);
 	InitializeCriticalSection(&object->lock);
 	object->transform = transform;
 	object->parent = parent;
