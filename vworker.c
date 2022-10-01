@@ -145,6 +145,7 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 
 VAPI vBOOL vDestroyWorker(vPWorker worker)
 {
+	vLogInfoFormatted(__func__, "Sending kill signal to worker '%s'.", worker->name);
 	EnterCriticalSection(&worker->cycleLock);
 	_bittestandset64(&worker->workerState, 1);
 	LeaveCriticalSection(&worker->cycleLock);
