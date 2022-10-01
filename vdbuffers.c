@@ -324,6 +324,9 @@ VAPI void vDBufferClear(vHNDL dBuffer)
 	vDBufferLock(dBuffer);
 	vPDBuffer buffer = &_vcore.dbuffers[dBuffer];
 
+	/* check if already empty */
+	if (buffer->elementCount == 0) return;
+
 	vPDBufferNode node = buffer->head;
 
 	/* walk all nodes and set their fields to NULL */

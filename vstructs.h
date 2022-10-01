@@ -179,6 +179,9 @@ typedef struct vObject
 /* ========== WORKER					==========	*/
 typedef struct vWorker
 {
+	/* thread string name */
+	vCHAR name[BUFF_SMALL];
+
 	HANDLE thread;			/* win32 thread */
 
 	/* state of worker.			*/

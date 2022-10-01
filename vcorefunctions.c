@@ -91,39 +91,6 @@ VAPI vBOOL vCoreInitialize(void)
 	return TRUE;
 }
 
-VAPI vBOOL vCoreTerminate(void)
-{
-	if (!vhIsInitialized()) return FALSE;
-
-	/* log shutdown and dump */
-	vLogInfo(__func__, "VCore terminating.");
-	vDumpEntryBuffer();
-
-	/* sync files and core */
-	EnterCriticalSection(&_vcore.rwPermission);
-	EnterCriticalSection(&_vcore.fileLock);
-
-	/* remove all locks */
-	for (int i = 0; i < MAX_LOCKS; i++)
-	{
-		/* if lock doesn't exist, skip */
-		if (*(DWORD*)&_vcore.locks[i] == UNUSED_LOCK) continue;
-
-		/* lock and delete */
-		EnterCriticalSection(&_vcore.locks[i]);
-		DeleteCriticalSection(&_vcore.locks[i]);
-	}
-
-	/* destroy sync objects */
-	DeleteCriticalSection(&_vcore.rwPermission);
-	DeleteCriticalSection(&_vcore.fileLock);
-
-	/* destroy heap */
-	HeapDestroy(_vcore.heap);
-
-	return TRUE;
-}
-
 
 /* ========== TIME								==========	*/
 VAPI void vCoreTime(vPTIME outTime)

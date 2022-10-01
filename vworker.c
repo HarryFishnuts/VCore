@@ -25,7 +25,8 @@ static void vhWorkerTaskListElementInitFunc(vHNDL buffer, vPWorkerTaskData taskD
 static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 {
 	vPWorker worker = input->worker;
-	vLogInfoFormatted(__func__, "Worker thread [%p] started.", worker);
+	vLogInfoFormatted(__func__, "Worker '%s' started with thread [%p].", 
+		worker->name, worker->thread);
 
 	/* call initialization function */
 	if (worker->initFunc)
@@ -34,9 +35,6 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 	/* start main loop */
 	while (TRUE)
 	{
-		/* LOCK THREAD */
-		EnterCriticalSection(&worker->cycleLock);
-
 		/* wait for interval to execute cycle */
 		ULONGLONG currentTime = GetTickCount64();
 		ULONGLONG nextCycleTime = worker->lastCycleTime + worker->cycleIntervalMiliseconds;
@@ -45,9 +43,15 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 			Sleep(nextCycleTime - currentTime);
 		}
 
+		/* LOCK THREAD */
+		EnterCriticalSection(&worker->cycleLock);
+
 		/* check for kill signal */
 		if (_bittest64(&worker->workerState, 1) == TRUE)
 		{
+			vLogInfoFormatted(__func__, "Worker '%s' recieved kill signal and is exiting.",
+				worker->name);
+
 			if (worker->exitFunc)
 				worker->exitFunc(worker, worker->persistentData);
 
@@ -62,7 +66,8 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		if (_bittest64(&worker->workerState, 0) == TRUE) continue;
 
 		/* complete next cycle */
-		worker->cycleFunc(worker, worker->persistentData);
+		if (worker->cycleFunc)
+			worker->cycleFunc(worker, worker->persistentData);
 		worker->lastCycleTime = GetTickCount64();
 		worker->cycleCount++;
 
@@ -72,7 +77,7 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 }
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
+VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT initFunc,
 	vPFWORKEREXIT exitFunc, vPFWORKERCYCLE cycleFunc, vUI64 persistentSizeBytes,
 	vPTR initInput)
 {
@@ -88,19 +93,22 @@ VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
 
 		/* on found free worker, init worker */
 		vZeroMemory(worker, sizeof(vWorker));
+
+		vMemCopy(worker->name, name, min(BUFF_SMALL, strlen(name)));
+
 		InitializeCriticalSection(&worker->cycleLock);
 		worker->cycleIntervalMiliseconds = cycleInterval;
 		worker->initFunc  = initFunc;
 		worker->exitFunc  = exitFunc;
 		worker->cycleFunc = cycleFunc;
 		worker->persistentDataSizeBytes = persistentSizeBytes;
-		worker->persistentData = vAllocZeroed(worker->persistentDataSizeBytes);
+		worker->persistentData = vAllocZeroed(max(4, worker->persistentDataSizeBytes));
 
 		/* initialize task buffer */
 		char taskListNameBuffer[BUFF_SMALL];
 		vZeroMemory(taskListNameBuffer, sizeof(taskListNameBuffer));
-		sprintf_s(taskListNameBuffer, BUFF_SMALL, "Worker [%d] [%p] Taskbuffer",
-			i, worker);
+		sprintf_s(taskListNameBuffer, BUFF_SMALL, "Worker '%s' Taskbuffer",
+			worker->name);
 		worker->taskList = vCreateDBuffer(taskListNameBuffer, sizeof(vWorkerTaskData),
 			0x100, vhWorkerTaskListElementInitFunc, NULL);
 
@@ -109,7 +117,8 @@ VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
 		workerInput.worker    = worker;
 		workerInput.userInput = initInput;
 
-		vLogInfoFormatted(__func__, "Creating worker [%p].", worker);
+		/* create thread and log */
+		vLogInfoFormatted(__func__, "Creating worker '%s'.", worker->name);
 		worker->thread = CreateThread(NULL, ZERO, vhWorkerThreadProc, 
 			&workerInput, NO_FLAGS, NULL);
 

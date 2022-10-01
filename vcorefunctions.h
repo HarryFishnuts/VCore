@@ -10,9 +10,8 @@
 #include "vcore.h"
 
 
-/* ========== INITIALIZATION AND TERMINATION	==========	*/
+/* ========== INITIALIZATION					==========	*/
 VAPI vBOOL vCoreInitialize(void);
-VAPI vBOOL vCoreTerminate(void);
 
 
 /* ========== TIME								==========	*/

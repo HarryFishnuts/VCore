@@ -11,7 +11,7 @@
 
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-VAPI vPWorker vCreateWorker(vTIME cycleInterval, vPFWORKERINIT initFunc,
+VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT initFunc,
 	vPFWORKEREXIT exitFunc, vPFWORKERCYCLE cycleFunc, vUI64 persistentSizeBytes,
 	vPTR initInput);
 VAPI vBOOL vDestroyWorker(vPWorker worker);
