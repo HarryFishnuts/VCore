@@ -49,13 +49,20 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		/* check for kill signal */
 		if (_bittest64(&worker->workerState, 1) == TRUE)
 		{
+			/* log and run exitfunc */
 			vLogInfoFormatted(__func__, "Worker '%s' recieved kill signal and is exiting.",
 				worker->name);
 
 			if (worker->exitFunc)
 				worker->exitFunc(worker, worker->persistentData);
 
-			ExitThread(1);
+			/* free all memory and clear flags */
+			vCoreLock();
+			vFree(worker->persistentData);
+			vZeroMemory(worker, sizeof(vWorker));
+			vCoreUnlock();
+
+			ExitThread(ERROR_SUCCESS);
 		}
 
 		/* complete all tasks */
