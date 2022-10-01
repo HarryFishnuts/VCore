@@ -46,6 +46,10 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		/* LOCK THREAD */
 		EnterCriticalSection(&worker->cycleLock);
 
+		/* complete all tasks */
+		vDBufferIterate(worker->taskList, vhWorkerTaskIterateFunc, worker);
+		vDBufferClear(worker->taskList);
+
 		/* check for kill signal */
 		if (_bittest64(&worker->workerState, 1) == TRUE)
 		{
@@ -64,10 +68,6 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 
 			ExitThread(ERROR_SUCCESS);
 		}
-
-		/* complete all tasks */
-		vDBufferIterate(worker->taskList, vhWorkerTaskIterateFunc, worker);
-		vDBufferClear(worker->taskList);
 
 		/* if thread is suspended, ignore cycle */
 		if (_bittest64(&worker->workerState, 0) == TRUE)
