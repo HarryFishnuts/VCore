@@ -17,7 +17,8 @@
 #include "vfileio.h"			/* file manipulation functions	*/
 #include "vlock.h"				/* thread synchronization		*/
 #include "vdbuffers.h"			/* dynamic buffering system		*/
-
+#include "vobject.h"			/* object/component system		*/
+#include "vworker.h"			/* flexible threading system	*/
 
 
 #endif

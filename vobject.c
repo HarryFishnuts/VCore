@@ -44,6 +44,18 @@ VAPI void       vDestroyObject(vPObject object)
 	
 	EnterCriticalSection(&object->lock);
 	DeleteCriticalSection(&object->lock);
+
+	/* destroy all components */
+	for (int i = 0; i < VOBJECT_MAX_COMPONENTS; i++)
+	{
+		vPComponent comp = object->components + i;
+		if (comp->objectAttribute == NULL) continue;
+		
+		vPComponentDescriptor cDesc = _vcore.components + comp->componentDescriptorHandle;
+		if (cDesc->objectDestroyFunc)
+			cDesc->objectDestroyFunc(object, comp);
+	}
+
 	vDBufferRemove(_vcore.objects, object);
 
 	vDBufferUnlock(_vcore.objects);
@@ -227,8 +239,8 @@ VAPI vBOOL vObjectRemoveComponent(vPObject object, vUI16 component)
 	{
 		vPComponent comp = object->components + i;
 
-		/* if used, skip */
-		if (comp->objectAttribute != NULL) continue;
+		/* if unused, skip */
+		if (comp->objectAttribute == NULL) continue;
 
 		/* if of not same type, skip */
 		if (comp->componentDescriptorHandle != component) continue;

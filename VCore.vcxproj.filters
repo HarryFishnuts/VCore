@@ -52,6 +52,12 @@
     <Filter Include="Source Files\Object">
       <UniqueIdentifier>{8525b011-21be-4286-8a53-47135557a8d7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Worker">
+      <UniqueIdentifier>{ca7ab923-f0ae-47eb-85dc-981bad205727}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Worker">
+      <UniqueIdentifier>{795921f1-228a-4e4a-99e0-8e7f5d50d601}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="vdefs.h">
@@ -90,6 +96,9 @@
     <ClInclude Include="vobject.h">
       <Filter>Header Files\Object</Filter>
     </ClInclude>
+    <ClInclude Include="vworker.h">
+      <Filter>Header Files\Worker</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="vcorefunctions.c">
@@ -115,6 +124,9 @@
     </ClCompile>
     <ClCompile Include="vobject.c">
       <Filter>Source Files\Object</Filter>
+    </ClCompile>
+    <ClCompile Include="vworker.c">
+      <Filter>Source Files\Worker</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

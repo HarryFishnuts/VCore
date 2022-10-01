@@ -176,6 +176,37 @@ typedef struct vObject
 } vObject, *vPObject;
 
 
+/* ========== WORKER					==========	*/
+typedef struct vWorker
+{
+	HANDLE thread;			/* win32 thread */
+
+	/* persistent data */
+	vUI64 persistentDataSizeBytes;
+	vPTR  persistentData;
+
+	/* init and destruction callbacks */
+	vPFWORKERINIT initFunc;
+	vPFWORKEREXIT exitFunc;
+
+	/* cycle func and count */
+	CRITICAL_SECTION cycleLock;
+	vTIME			 cycleIntervalMiliseconds;
+	vUI64			 cycleCount;
+	vPFWORKERCYCLE	 cycleFunc;
+
+	/* task list */
+	vHNDL taskList;
+
+} vWorker, *vPWorker;
+
+typedef struct vWorkerInput
+{
+	vPWorker worker;
+	vPTR     userInput;
+} vWorkerInput, *vPWorkerInput;
+
+
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/
 /* A single instance of this struct exists to be shared		*/
 /* across all source files of VCore.						*/
@@ -204,6 +235,9 @@ typedef struct _vCoreInternals
 
 	/* object dynamic buffer */
 	vHNDL objects;
+
+	/* all workers */
+	vWorker workers[WORKERS_MAX];
 
 	/* components list */
 	vComponentDescriptor components[COMPONENTS_MAX];

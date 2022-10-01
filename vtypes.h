@@ -51,13 +51,13 @@ typedef vTIME* vPTIME;
 
 
 /* ========== CALLBACK TYPES					==========	*/
-typedef void (*vPFBUFFERITERATEFUNC)(vHNDL buffer, vUI16 index, vPTR element);
+typedef void (*vPFBUFFERITERATEFUNC )(vHNDL buffer, vUI16 index, vPTR element);
 typedef void (*vPFDBUFFERITERATEFUNC)(vHNDL dbuffer, vPTR element);
 
-typedef void (*vPFBUFFERINITIALIZEELEMENT)(vHNDL buffer, vUI16 index, vPTR element);
+typedef void (*vPFBUFFERINITIALIZEELEMENT )(vHNDL buffer, vUI16 index, vPTR element);
 typedef void (*vPFDBUFFERINITIALIZEELEMENT)(vHNDL dbuffer, vPTR element);
 
-typedef void (*vPFBUFFERDESTROYELEMENT)(vHNDL buffer, vUI16 index, vPTR element);
+typedef void (*vPFBUFFERDESTROYELEMENT )(vHNDL buffer, vUI16 index, vPTR element);
 typedef void (*vPFDBUFFERDESTROYELEMENT)(vHNDL dbuffer, vPTR element);
 
 typedef void (*vPFCOMPONENTINITIALIZATIONSTATIC)(struct vComponentDescriptor* descriptor,
@@ -66,6 +66,13 @@ typedef void (*vPFCOMPONENTINITIALIZATION)(struct vObject* object,
 	struct vComponent* component);
 typedef void (*vPFCOMPONENTDESTRUCTION)(struct vObject* object, 
 	struct vComponent* component);
+
+typedef void (*vPFWORKERINIT )(struct vWorker* worker, vPTR persistentData, 
+	vPTR input);
+typedef void (*vPFWORKEREXIT )(struct vWorker* worker, vPTR persistentData);
+typedef void (*vPFWORKERCYCLE)(struct vWorker* worker, vPTR persistentData);
+typedef void (*vPFWORKERTASK) (struct vWorker* worker, vPTR persistentData, 
+	vPTR input);
 
 
 #endif
