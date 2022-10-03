@@ -20,7 +20,8 @@ VAPI void       vDestroyObject(vPObject object);
 /* ========== COMPONENT CREATION				==========	*/
 VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 	vPFCOMPONENTINITIALIZATIONSTATIC staticInitialization,
-	vPFCOMPONENTINITIALIZATION initialization, vPFCOMPONENTDESTRUCTION destruction);
+	vPFCOMPONENTINITIALIZATION initialization, vPFCOMPONENTDESTRUCTION destruction,
+	vPFCOMPONENTCYCLE cycle, vPWorker cycleWorker);
 VAPI vUI16 vComponentGetHandleByName(vPCHAR name);
 VAPI vBOOL vComponentGetNameByHandle(vUI16 handle, vPCHAR nameBuffer, vUI32 bufferLength);
 VAPI vPTR  vComponentGetStaticPtr(vUI16 component);

@@ -65,6 +65,8 @@ typedef void (*vPFCOMPONENTINITIALIZATIONSTATIC)(struct vComponentDescriptor* de
 	vPTR staticData);
 typedef void (*vPFCOMPONENTINITIALIZATION)(struct vObject* object, 
 	struct vComponent* component);
+typedef void (*vPFCOMPONENTCYCLE)(struct vWorker* worker, vPTR persistentData,
+	struct vComponent* component);
 typedef void (*vPFCOMPONENTDESTRUCTION)(struct vObject* object, 
 	struct vComponent* component);
 

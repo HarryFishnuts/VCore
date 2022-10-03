@@ -136,9 +136,13 @@ typedef struct vComponentDescriptor
 
 	vUI64 objectAttributeSize; /* object attribute	*/
 
+	/* associated worker thread */
+	struct vWorker* objectCycleWorker;
+
 	/* callbacks */
 	vPFCOMPONENTINITIALIZATIONSTATIC staticInitFunc;
 	vPFCOMPONENTINITIALIZATION		 objectInitFunc;
+	vPFCOMPONENTCYCLE				 objectCycleFunc;
 	vPFCOMPONENTDESTRUCTION			 objectDestroyFunc;
 
 } vComponentDescriptor, *vPComponentDescriptor;
@@ -148,6 +152,7 @@ typedef struct vComponent
 	vUI16 componentDescriptorHandle;
 	vPTR  staticAttribute;
 	vPTR  objectAttribute;
+	vPTR  cycleDataPtr;
 } vComponent, *vPComponent;
 
 
@@ -209,6 +214,9 @@ typedef struct vWorker
 	/* task list */
 	vHNDL taskList;
 
+	/* component cycle list */
+	vHNDL componentCycleList;
+
 } vWorker, *vPWorker;
 
 typedef struct vWorkerInput
@@ -222,6 +230,12 @@ typedef struct vWorkerTaskData
 	vPFWORKERTASK task;
 	vPTR input;
 } vWorkerTaskData, *vPWorkerTaskData;
+
+typedef struct vWorkerComponentCycleData
+{
+	vPComponent		  component;
+	vPFCOMPONENTCYCLE cycleFunc;
+} vWorkerComponentCycleData, *vPWorkerComponentCycleData;
 
 
 /* ========== VCORE INTERNAL MEMORY LAYOUT		==========	*/

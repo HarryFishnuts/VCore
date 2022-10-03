@@ -65,7 +65,8 @@ VAPI void       vDestroyObject(vPObject object)
 /* ========== COMPONENT CREATION				==========	*/
 VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 	vPFCOMPONENTINITIALIZATIONSTATIC staticInitialization,
-	vPFCOMPONENTINITIALIZATION initialization, vPFCOMPONENTDESTRUCTION destruction)
+	vPFCOMPONENTINITIALIZATION initialization, vPFCOMPONENTDESTRUCTION destruction,
+	vPFCOMPONENTCYCLE cycle, vPWorker cycleWorker)
 {
 	vCoreLock();
 
@@ -91,6 +92,8 @@ VAPI vUI16 vCreateComponent(vPCHAR name, vUI64 staticSize, vUI64 objectSize,
 		compD->staticInitFunc = staticInitialization;
 		compD->objectInitFunc = initialization;
 		compD->objectDestroyFunc = destruction;
+		compD->objectCycleWorker = cycleWorker;
+		compD->objectCycleFunc   = cycle;
 		
 		/* allocate static block, do callback (if exists) */
 		compD->staticAttribute = vAllocZeroed(max(4, compD->staticAttributeSize));
@@ -215,6 +218,18 @@ VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component)
 		comp->staticAttribute = desc->staticAttribute;
 		comp->objectAttribute = vAllocZeroed(max(4, desc->objectAttributeSize));
 
+		/* if object has a worker to do it's cycle, attach to list */
+		if (desc->objectCycleWorker != NULL)
+		{
+			vWorkerComponentCycleData cycleData;
+			cycleData.component = comp;
+			cycleData.cycleFunc = desc->objectCycleFunc;
+
+			/* grab cycle data pointer */
+			comp->cycleDataPtr = 
+				vDBufferAdd(desc->objectCycleWorker->componentCycleList, &cycleData);
+		}
+
 		/* call init callback if possible */
 		if (desc->objectInitFunc)
 			desc->objectInitFunc(object, comp);
@@ -248,6 +263,10 @@ VAPI vBOOL vObjectRemoveComponent(vPObject object, vUI16 component)
 		/* call destruction callback if possible */
 		if (desc->objectDestroyFunc)
 			desc->objectDestroyFunc(object, comp);
+
+		/* remove cycle data from worker */
+		if (desc->objectCycleWorker != NULL)
+			vDBufferRemove(desc->objectCycleWorker->componentCycleList, comp->cycleDataPtr);
 
 		/* free object attribute memory */
 		vFree(comp->objectAttribute);

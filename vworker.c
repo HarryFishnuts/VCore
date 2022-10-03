@@ -22,6 +22,20 @@ static void vhWorkerTaskListElementInitFunc(vHNDL buffer, vPWorkerTaskData taskD
 	taskData->input = input->input;
 }
 
+static void vhWorkerComponentCycleElementInitFunc(vHNDL buffer, 
+	vPWorkerComponentCycleData cycleData, vPWorkerComponentCycleData input)
+{
+	cycleData->component = input->component;
+	cycleData->cycleFunc = input->cycleFunc;
+}
+
+static void vhWorkerComponentCycleIterateFunc(vHNDL dBuffer,
+	vPWorkerComponentCycleData data, vPWorker input)
+{
+	if (data->cycleFunc)
+		data->cycleFunc(input, input->persistentData, data->component);
+}
+
 static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 {
 	vPWorker worker = input->worker;
@@ -46,6 +60,10 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		/* LOCK THREAD */
 		EnterCriticalSection(&worker->cycleLock);
 
+		/* complete all component cycles */
+		vDBufferIterate(worker->componentCycleList,
+			vhWorkerComponentCycleIterateFunc, worker);
+
 		/* complete all tasks */
 		vDBufferIterate(worker->taskList, vhWorkerTaskIterateFunc, worker);
 		vDBufferClear(worker->taskList);
@@ -62,8 +80,12 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 
 			/* free all memory and clear flags */
 			vCoreLock();
+
+			vDestroyDBuffer(worker->taskList);
+			vDestroyDBuffer(worker->componentCycleList);
 			vFree(worker->persistentData);
 			vZeroMemory(worker, sizeof(vWorker));
+
 			vCoreUnlock();
 
 			ExitThread(ERROR_SUCCESS);
@@ -116,12 +138,19 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 		worker->persistentData = vAllocZeroed(max(4, worker->persistentDataSizeBytes));
 
 		/* initialize task buffer */
-		char taskListNameBuffer[BUFF_SMALL];
-		vZeroMemory(taskListNameBuffer, sizeof(taskListNameBuffer));
-		sprintf_s(taskListNameBuffer, BUFF_SMALL, "Worker '%s' Taskbuffer",
+		char stringBuffer[BUFF_SMALL];
+		vZeroMemory(stringBuffer, sizeof(stringBuffer));
+
+		sprintf_s(stringBuffer, BUFF_SMALL, "Worker '%s' Task List",
 			worker->name);
-		worker->taskList = vCreateDBuffer(taskListNameBuffer, sizeof(vWorkerTaskData),
+		worker->taskList = vCreateDBuffer(stringBuffer, sizeof(vWorkerTaskData),
 			WORKER_TASKLIST_NODE_SIZE, vhWorkerTaskListElementInitFunc, NULL);
+
+		/* initialize component cycle buffer */
+		sprintf_s(stringBuffer, BUFF_SMALL, "Worker '%s' Component Cylce List",
+			worker->name);
+		worker->componentCycleList = vCreateDBuffer(stringBuffer, sizeof(vWorkerComponentCycleData),
+			WORKER_COMPONENT_CYCLE_NODE_SIZE, vhWorkerComponentCycleElementInitFunc, NULL);
 
 		/* prepare worker input */
 		vWorkerInput workerInput;
@@ -239,4 +268,3 @@ VAPI vBOOL vWorkerWaitCycleCompletion(vPWorker worker, vTIME lastCycle, vTIME ma
 	
 	return TRUE;
 }
-
