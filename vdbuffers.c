@@ -281,6 +281,7 @@ VAPI void vDBufferRemove(vHNDL dBuffer, vPTR element)
 
 			/* decrement element count */
 			node->elementCount -= 1;
+			buffer->elementCount -= 1;
 
 			vDBufferUnlock(dBuffer);
 
