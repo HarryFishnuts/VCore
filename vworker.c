@@ -46,6 +46,9 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 	if (worker->initFunc)
 		worker->initFunc(worker, worker->persistentData, input->userInput);
 
+	/* free input memory */
+	vFree(input);
+
 	/* start main loop */
 	while (TRUE)
 	{
@@ -84,7 +87,6 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 			vDestroyDBuffer(worker->taskList);
 			vDestroyDBuffer(worker->componentCycleList);
 			vFree(worker->persistentData);
-			vZeroMemory(worker, sizeof(vWorker));
 
 			vCoreUnlock();
 
@@ -135,7 +137,7 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 		worker->exitFunc  = exitFunc;
 		worker->cycleFunc = cycleFunc;
 		worker->persistentDataSizeBytes = persistentSizeBytes;
-		worker->persistentData = vAllocZeroed(max(4, worker->persistentDataSizeBytes));
+		worker->persistentData = vAllocZeroed(max(4UL, worker->persistentDataSizeBytes));
 
 		/* initialize task buffer */
 		char stringBuffer[BUFF_SMALL];
@@ -153,14 +155,14 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 			WORKER_COMPONENT_CYCLE_NODE_SIZE, vhWorkerComponentCycleElementInitFunc, NULL);
 
 		/* prepare worker input */
-		vWorkerInput workerInput;
-		workerInput.worker    = worker;
-		workerInput.userInput = initInput;
+		vPWorkerInput workerInput = vAlloc(sizeof(vWorkerInput));
+		workerInput->worker    = worker;
+		workerInput->userInput = initInput;
 
 		/* create thread and log */
 		vLogInfoFormatted(__func__, "Creating worker '%s'.", worker->name);
 		worker->thread = CreateThread(NULL, ZERO, vhWorkerThreadProc, 
-			&workerInput, NO_FLAGS, NULL);
+			workerInput, NO_FLAGS, NULL);
 
 		vCoreUnlock();
 		return worker;
@@ -174,10 +176,29 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 
 VAPI vBOOL vDestroyWorker(vPWorker worker)
 {
+	vCoreLock();
+
 	vLogInfoFormatted(__func__, "Sending kill signal to worker '%s'.", worker->name);
+
+	/* set kill signal */
 	EnterCriticalSection(&worker->cycleLock);
 	_bittestandset64(&worker->workerState, 1);
 	LeaveCriticalSection(&worker->cycleLock);
+
+	/* wait for thread to finish and then zero memory */
+	DWORD result = WaitForSingleObject(worker->thread, INFINITE);
+	if (result != WAIT_OBJECT_0)
+	{
+		vLogErrorFormatted(__func__, "Error while trying to wait for worker thread '%s'",
+			worker->name);
+		vCoreFatalError(__func__, "Error while destroying worker.");
+	}
+
+	vZeroMemory(worker, sizeof(vWorker));
+
+	vCoreUnlock();
+
+	return TRUE;
 }
 
 
