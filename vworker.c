@@ -266,7 +266,7 @@ VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR inp
 	taskData->task  = taskFunc;
 	taskData->input = input;
 
-	vDBufferAdd(worker->taskList, &taskData);
+	vDBufferAdd(worker->taskList, taskData);
 
 	LeaveCriticalSection(&worker->cycleLock);
 
