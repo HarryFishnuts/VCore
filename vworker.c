@@ -20,6 +20,14 @@ static void vhWorkerTaskListElementInitFunc(vHNDL buffer, vPWorkerTaskData taskD
 {
 	taskData->task  = input->task;
 	taskData->input = input->input;
+
+	if (taskData->task == NULL)
+	{
+		vLogWarning(__func__,
+			"Dispatched a NULL task to a worker.");
+	}
+
+	vFree(input);
 }
 
 static void vhWorkerComponentCycleElementInitFunc(vHNDL buffer, 
@@ -27,6 +35,13 @@ static void vhWorkerComponentCycleElementInitFunc(vHNDL buffer,
 {
 	cycleData->component = input->component;
 	cycleData->cycleFunc = input->cycleFunc;
+
+	if (input->cycleFunc == NULL)
+	{
+		vLogWarningFormatted(__func__,
+			"Component %p with no cycle function attached to a worker.",
+			input->component);
+	}
 }
 
 static void vhWorkerComponentCycleIterateFunc(vHNDL dBuffer,
@@ -247,9 +262,9 @@ VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR inp
 {
 	EnterCriticalSection(&worker->cycleLock);
 	
-	vWorkerTaskData taskData;
-	taskData.task  = taskFunc;
-	taskData.input = input;
+	vPWorkerTaskData taskData = vAlloc(sizeof(vWorkerTaskData));
+	taskData->task  = taskFunc;
+	taskData->input = input;
 
 	vDBufferAdd(worker->taskList, &taskData);
 
