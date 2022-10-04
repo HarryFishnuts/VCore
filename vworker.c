@@ -82,13 +82,9 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 				worker->exitFunc(worker, worker->persistentData);
 
 			/* free all memory and clear flags */
-			vCoreLock();
-
 			vDestroyDBuffer(worker->taskList);
 			vDestroyDBuffer(worker->componentCycleList);
 			vFree(worker->persistentData);
-
-			vCoreUnlock();
 
 			ExitThread(ERROR_SUCCESS);
 		}
@@ -176,8 +172,6 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 
 VAPI vBOOL vDestroyWorker(vPWorker worker)
 {
-	vCoreLock();
-
 	vLogInfoFormatted(__func__, "Sending kill signal to worker '%s'.", worker->name);
 
 	/* set kill signal */
@@ -193,6 +187,8 @@ VAPI vBOOL vDestroyWorker(vPWorker worker)
 			worker->name);
 		vCoreFatalError(__func__, "Error while destroying worker.");
 	}
+
+	vCoreLock();
 
 	vZeroMemory(worker, sizeof(vWorker));
 
