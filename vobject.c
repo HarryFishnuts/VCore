@@ -24,6 +24,16 @@ VAPI vTransform vCreateTransform(vPosition pos, float r, float s)
 	return transform;
 }
 
+VAPI vTransform vCreateTransformF(float x, float y, float r, float s)
+{
+	vTransform transform;
+	transform.position.x = x;
+	transform.position.y = y;
+	transform.rotation = r;
+	transform.scale = s;
+	return transform;
+}
+
 VAPI vPObject   vCreateObject(vTransform transform, vPObject parent)
 {
 	vDBufferLock(_vcore.objects);
@@ -198,7 +208,7 @@ VAPI void vObjectUnlock(vPObject object)
 
 
 /* ========== OBJECT COMPONENT MANIPULATION		==========	*/
-VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component)
+VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component, vPTR input)
 {
 	/* don't add if already existing */
 	if (vObjectHasComponent(object, component)) return FALSE;
@@ -232,7 +242,7 @@ VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component)
 
 		/* call init callback if possible */
 		if (desc->objectInitFunc)
-			desc->objectInitFunc(object, comp);
+			desc->objectInitFunc(object, comp, input);
 		
 		LeaveCriticalSection(&object->lock);
 		return comp;

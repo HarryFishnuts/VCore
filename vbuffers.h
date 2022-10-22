@@ -11,7 +11,7 @@
 
 
 /* ========== CREATION AND DESTRUCTION			==========	*/
-VAPI vHNDL CreateBuffer(const char* bufferName, vUI16 elementSize,
+VAPI vHNDL vCreateBuffer(const char* bufferName, vUI16 elementSize,
 	vUI16 capacity, vPFBUFFERINITIALIZEELEMENT initializeFunc,
 	vPFBUFFERDESTROYELEMENT destroyFunc);
 VAPI vBOOL vDestroyBuffer(vHNDL buffer);

@@ -64,7 +64,7 @@ typedef void (*vPFDBUFFERDESTROYELEMENT)(vHNDL dbuffer, vPTR element);
 typedef void (*vPFCOMPONENTINITIALIZATIONSTATIC)(struct vComponentDescriptor* descriptor,
 	vPTR staticData);
 typedef void (*vPFCOMPONENTINITIALIZATION)(struct vObject* object, 
-	struct vComponent* component);
+	struct vComponent* component, vPTR input);
 typedef void (*vPFCOMPONENTCYCLE)(struct vWorker* worker, vPTR persistentData,
 	struct vComponent* component);
 typedef void (*vPFCOMPONENTDESTRUCTION)(struct vObject* object, 

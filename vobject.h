@@ -13,6 +13,7 @@
 /* ========== CREATION AND DESTRUCTION			==========	*/
 VAPI vPosition  vCreatePosition(float x, float y);
 VAPI vTransform vCreateTransform(vPosition pos, float r, float s);
+VAPI vTransform vCreateTransformF(float x, float y, float r, float s);
 VAPI vPObject   vCreateObject(vTransform transform, vPObject parent);
 VAPI void       vDestroyObject(vPObject object);
 
@@ -36,7 +37,7 @@ VAPI void vObjectUnlock(vPObject object);
 
 
 /* ========== OBJECT COMPONENT MANIPULATION		==========	*/
-VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component);
+VAPI vPComponent vObjectAddComponent(vPObject object, vUI16 component, vPTR input);
 VAPI vBOOL vObjectRemoveComponent(vPObject object, vUI16 component);
 VAPI vBOOL vObjectHasComponent(vPObject object, vUI16 component);
 VAPI vPComponent vObjectGetComponent(vPObject object, vUI16 component);
