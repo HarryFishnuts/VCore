@@ -166,7 +166,7 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 			WORKER_COMPONENT_CYCLE_NODE_SIZE, vhWorkerComponentCycleElementInitFunc, NULL);
 
 		/* prepare worker input */
-		vPWorkerInput workerInput = vAlloc(sizeof(vWorkerInput));
+		vPWorkerInput workerInput = vAllocZeroed(sizeof(vWorkerInput));
 		workerInput->worker    = worker;
 		workerInput->userInput = initInput;
 
@@ -262,7 +262,7 @@ VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR inp
 {
 	EnterCriticalSection(&worker->cycleLock);
 	
-	vPWorkerTaskData taskData = vAlloc(sizeof(vWorkerTaskData));
+	vPWorkerTaskData taskData = vAllocZeroed(sizeof(vWorkerTaskData));
 	taskData->task  = taskFunc;
 	taskData->input = input;
 

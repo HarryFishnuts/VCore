@@ -5,6 +5,7 @@
 /* ========== INCLUDES							==========	*/
 #include "vdbuffers.h"
 #include <intrin.h>
+#include <stdio.h>
 
 
 /* ========== HELPER							==========	*/
@@ -125,8 +126,8 @@ VAPI vHNDL vCreateDBuffer(const char* dBufferName, vUI16 elementSize,
 	dBuffer->destroyFunc    = destroyFunc;
 
 	/* setup first node */
-	dBuffer->head = vhCreateBufferNode(dBuffer);
-	dBuffer->tail = dBuffer->head;
+	dBuffer->head = NULL;
+	dBuffer->tail = NULL;
 
 	vCoreUnlock(); /* UNSYNC */
 
@@ -170,7 +171,7 @@ VAPI vBOOL vDestroyDBuffer(vHNDL dBuffer)
 		vPDBufferNode toDestroy = node;
 
 		/* node now points to next node */
-		node = toDestroy->next;
+		node = node->next;
 
 		/* destroy current node */
 		vhDestroyBufferNode(toDestroy);
@@ -207,6 +208,13 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer, vPTR input)
 
 	/* try add to each node */
 	vPDBufferNode currentNode = buffer->head;
+
+	/* ensure head exists */
+	if (currentNode == NULL)
+	{
+		currentNode  = vhCreateBufferNode(buffer);
+		buffer->tail = currentNode;
+	}
 
 	while(TRUE)
 	{
