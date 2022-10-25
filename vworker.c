@@ -101,6 +101,11 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 			vDestroyDBuffer(worker->componentCycleList);
 			vFree(worker->persistentData);
 
+			/* zero worker memory */
+			vCoreLock();
+			vZeroMemory(worker, sizeof(vWorker));
+			vCoreUnlock();
+
 			ExitThread(ERROR_SUCCESS);
 		}
 
@@ -187,6 +192,19 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 
 VAPI vBOOL vDestroyWorker(vPWorker worker)
 {
+	/* if called on worker to be destroyed */
+	if (GetCurrentThread() == worker->thread)
+	{
+		vLogInfoFormatted(__func__, "Worker '%s' has signaled self for destruction.",
+			worker->name);
+		vDumpEntryBuffer();
+
+		/* set kill flag */
+		_bittestandset64(&worker->workerState, 1);
+
+		return;
+	}
+
 	vLogInfoFormatted(__func__, "Sending kill signal to worker '%s'.", worker->name);
 
 	/* set kill signal */
@@ -194,7 +212,7 @@ VAPI vBOOL vDestroyWorker(vPWorker worker)
 	_bittestandset64(&worker->workerState, 1);
 	LeaveCriticalSection(&worker->cycleLock);
 
-	/* wait for thread to finish and then zero memory */
+	/* wait for thread to finish */
 	DWORD result = WaitForSingleObject(worker->thread, INFINITE);
 	if (result != WAIT_OBJECT_0)
 	{
@@ -203,12 +221,7 @@ VAPI vBOOL vDestroyWorker(vPWorker worker)
 		vCoreFatalError(__func__, "Error while destroying worker.");
 	}
 
-	vCoreLock();
-
-	vZeroMemory(worker, sizeof(vWorker));
-
-	vCoreUnlock();
-
+	vDumpEntryBuffer();
 	return TRUE;
 }
 
@@ -260,6 +273,13 @@ VAPI void  vWorkerUnlock(vPWorker worker)
 
 VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR input)
 {
+	/* if current thread is the worker, execute immediately */
+	if (GetCurrentThread() == worker->thread)
+	{
+		taskFunc(worker, worker->persistentData, input);
+		return vWorkerGetCycle(worker);
+	}
+
 	EnterCriticalSection(&worker->cycleLock);
 	
 	vPWorkerTaskData taskData = vAllocZeroed(sizeof(vWorkerTaskData));
@@ -275,6 +295,9 @@ VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR inp
 
 VAPI vBOOL vWorkerWaitCycleCompletion(vPWorker worker, vTIME lastCycle, vTIME maxWaitTime)
 {
+	/* if current thread is the worker, return immediately */
+	if (GetCurrentThread() == worker->thread) return TRUE;
+
 	ULONGLONG startTime = GetTickCount64();
 
 	while (TRUE)

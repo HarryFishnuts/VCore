@@ -206,15 +206,16 @@ VAPI vPTR vDBufferAdd(vHNDL dBuffer, vPTR input)
 
 	vDBufferLock(dBuffer); /* SYNC */
 
-	/* try add to each node */
-	vPDBufferNode currentNode = buffer->head;
 
 	/* ensure head exists */
-	if (currentNode == NULL)
+	if (buffer->head == NULL)
 	{
-		currentNode  = vhCreateBufferNode(buffer);
-		buffer->tail = currentNode;
+		buffer->head = vhCreateBufferNode(buffer);
+		buffer->tail = buffer->head;
 	}
+
+	/* try add to each node */
+	vPDBufferNode currentNode = buffer->head;
 
 	while(TRUE)
 	{
