@@ -51,6 +51,26 @@ static void vhWorkerComponentCycleIterateFunc(vHNDL dBuffer,
 		data->cycleFunc(input, input->persistentData, data->component);
 }
 
+static void vhWorkerExitBehavior(vPWorker worker)
+{
+	/* log and run exitfunc */
+	vLogInfoFormatted(__func__, "Worker '%s' recieved kill signal and is exiting.",
+		worker->name);
+
+	if (worker->exitFunc)
+		worker->exitFunc(worker, worker->persistentData);
+
+	/* free all memory and clear flags */
+	vDestroyDBuffer(worker->taskList);
+	vDestroyDBuffer(worker->componentCycleList);
+	vFree(worker->persistentData);
+
+	/* clear thread */
+	worker->thread = NULL;
+
+	ExitThread(ERROR_SUCCESS);
+}
+
 static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 {
 	vPWorker worker = input->worker;
@@ -89,24 +109,8 @@ static DWORD WINAPI vhWorkerThreadProc(vPWorkerInput input)
 		/* check for kill signal */
 		if (_bittest64(&worker->workerState, 1) == TRUE)
 		{
-			/* log and run exitfunc */
-			vLogInfoFormatted(__func__, "Worker '%s' recieved kill signal and is exiting.",
-				worker->name);
-
-			if (worker->exitFunc)
-				worker->exitFunc(worker, worker->persistentData);
-
-			/* free all memory and clear flags */
-			vDestroyDBuffer(worker->taskList);
-			vDestroyDBuffer(worker->componentCycleList);
-			vFree(worker->persistentData);
-
-			/* zero worker memory */
-			vCoreLock();
-			vZeroMemory(worker, sizeof(vWorker));
-			vCoreUnlock();
-
-			ExitThread(ERROR_SUCCESS);
+			/* apply exit behavior */
+			vhWorkerExitBehavior(worker);
 		}
 
 		/* if thread is suspended, ignore cycle */
@@ -139,8 +143,10 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 	{
 		worker = _vcore.workers + i;
 
-		/* if used, skip */
-		if (worker->thread != NULL) continue;
+		/* if thread is active, skip */
+		DWORD exitCode = ZERO;
+		GetExitCodeThread(worker->thread, &exitCode);
+		if (exitCode == STILL_ACTIVE) continue;
 
 		/* on found free worker, init worker */
 		vZeroMemory(worker, sizeof(vWorker));
@@ -192,17 +198,12 @@ VAPI vPWorker vCreateWorker(vPCHAR name, vTIME cycleInterval, vPFWORKERINIT init
 
 VAPI vBOOL vDestroyWorker(vPWorker worker)
 {
+	
 	/* if called on worker to be destroyed */
-	if (GetCurrentThread() == worker->thread)
+	if (GetCurrentThreadId() == GetThreadId(worker->thread))
 	{
-		vLogInfoFormatted(__func__, "Worker '%s' has signaled self for destruction.",
-			worker->name);
-		vDumpEntryBuffer();
-
-		/* set kill flag */
-		_bittestandset64(&worker->workerState, 1);
-
-		return;
+		/* apply worker exit behavior */
+		vhWorkerExitBehavior(worker);
 	}
 
 	vLogInfoFormatted(__func__, "Sending kill signal to worker '%s'.", worker->name);
@@ -250,6 +251,13 @@ VAPI vBOOL vWorkerIsPaused(vPWorker worker)
 	return state;
 }
 
+VAPI vBOOL vWorkerIsAlive(vPWorker worker)
+{
+	DWORD exitCode = ZERO;
+	GetExitCodeThread(worker->thread, &exitCode);
+	return (exitCode == STILL_ACTIVE);
+}
+
 
 /* ========== DISPATCH AND SYNCHRONIZATION		==========	*/
 VAPI vTIME vWorkerGetCycle(vPWorker worker)
@@ -274,7 +282,7 @@ VAPI void  vWorkerUnlock(vPWorker worker)
 VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR input)
 {
 	/* if current thread is the worker, execute immediately */
-	if (GetCurrentThread() == worker->thread)
+	if (GetCurrentThreadId() == GetThreadId(worker->thread))
 	{
 		taskFunc(worker, worker->persistentData, input);
 		return vWorkerGetCycle(worker);
@@ -296,7 +304,7 @@ VAPI vTIME vWorkerDispatchTask(vPWorker worker, vPFWORKERTASK taskFunc, vPTR inp
 VAPI vBOOL vWorkerWaitCycleCompletion(vPWorker worker, vTIME lastCycle, vTIME maxWaitTime)
 {
 	/* if current thread is the worker, return immediately */
-	if (GetCurrentThread() == worker->thread) return TRUE;
+	if (GetCurrentThreadId() == GetThreadId(worker->thread)) return TRUE;
 
 	ULONGLONG startTime = GetTickCount64();
 

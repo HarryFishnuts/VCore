@@ -21,6 +21,7 @@ VAPI vBOOL vDestroyWorker(vPWorker worker);
 VAPI void  vWorkerPause(vPWorker worker);
 VAPI void  vWorkerUnpause(vPWorker worker);
 VAPI vBOOL vWorkerIsPaused(vPWorker worker);
+VAPI vBOOL vWorkerIsAlive(vPWorker worker);
 
 
 /* ========== DISPATCH AND SYNCHRONIZATION		==========	*/
