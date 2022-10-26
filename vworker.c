@@ -53,6 +53,8 @@ static void vhWorkerComponentCycleIterateFunc(vHNDL dBuffer,
 
 static void vhWorkerExitBehavior(vPWorker worker)
 {
+	EnterCriticalSection(&worker->cycleLock);
+
 	/* log and run exitfunc */
 	vLogInfoFormatted(__func__, "Worker '%s' recieved kill signal and is exiting.",
 		worker->name);
@@ -63,10 +65,10 @@ static void vhWorkerExitBehavior(vPWorker worker)
 	/* free all memory and clear flags */
 	vDestroyDBuffer(worker->taskList);
 	vDestroyDBuffer(worker->componentCycleList);
+
 	vFree(worker->persistentData);
 
-	/* clear thread */
-	worker->thread = NULL;
+	LeaveCriticalSection(&worker->cycleLock);
 
 	ExitThread(ERROR_SUCCESS);
 }
@@ -253,8 +255,11 @@ VAPI vBOOL vWorkerIsPaused(vPWorker worker)
 
 VAPI vBOOL vWorkerIsAlive(vPWorker worker)
 {
+	vCoreLock();
 	DWORD exitCode = ZERO;
 	GetExitCodeThread(worker->thread, &exitCode);
+	vCoreUnlock();
+
 	return (exitCode == STILL_ACTIVE);
 }
 
