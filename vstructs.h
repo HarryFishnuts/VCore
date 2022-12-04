@@ -173,7 +173,6 @@ typedef struct vTransform
 typedef struct vObject
 {
 	struct vObject* parent;	/* object parent	*/
-	vTransform transform;   /* object transform	*/
 	CRITICAL_SECTION lock;  /* sync object		*/
 
 	/* components */

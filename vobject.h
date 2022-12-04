@@ -14,7 +14,7 @@
 VAPI vPosition  vCreatePosition(float x, float y);
 VAPI vTransform vCreateTransform(vPosition pos, float r, float s);
 VAPI vTransform vCreateTransformF(float x, float y, float r, float s);
-VAPI vPObject   vCreateObject(vTransform transform, vPObject parent);
+VAPI vPObject   vCreateObject(vPObject parent);
 VAPI void       vDestroyObject(vPObject object);
 
 

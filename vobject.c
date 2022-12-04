@@ -34,13 +34,12 @@ VAPI vTransform vCreateTransformF(float x, float y, float r, float s)
 	return transform;
 }
 
-VAPI vPObject   vCreateObject(vTransform transform, vPObject parent)
+VAPI vPObject   vCreateObject(vPObject parent)
 {
 	vDBufferLock(_vcore.objects);
 
 	vPObject object = vDBufferAdd(_vcore.objects, NULL);
 	InitializeCriticalSection(&object->lock);
-	object->transform = transform;
 	object->parent = parent;
 
 	vDBufferUnlock(_vcore.objects);
