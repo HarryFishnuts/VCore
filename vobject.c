@@ -324,8 +324,8 @@ VAPI vPComponent vObjectGetComponent(vPObject object, vUI16 component)
 	{
 		vPComponent comp = object->components + i;
 
-		/* if used, skip */
-		if (comp->objectAttribute != NULL) continue;
+		/* if not in use, skip */
+		if (comp->objectAttribute == NULL) continue;
 
 		/* if unmatching, skip */
 		if (comp->componentDescriptorHandle != component) continue;
