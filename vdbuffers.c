@@ -47,11 +47,12 @@ static __forceinline vPDBufferNode vhCreateBufferNode(vPDBuffer parent)
 
 static __forceinline void vhDestroyBufferNode(vPDBufferNode node)
 {
-	EnterCriticalSection(&node->parent->rwPermission);
+	vPDBuffer parent = node->parent;
+	EnterCriticalSection(&parent->rwPermission);
 
 	vFree(node);
 
-	LeaveCriticalSection(&node->parent->rwPermission);
+	LeaveCriticalSection(&parent->rwPermission);
 }
 
 static __forceinline void vhMapIndexToUseField(vUI64 index, vPUI64 chunk, vPUI64 bit)
