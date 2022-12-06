@@ -313,12 +313,24 @@ VAPI vBOOL vWorkerWaitCycleCompletion(vPWorker worker, vTIME lastCycle, vTIME ma
 
 	ULONGLONG startTime = GetTickCount64();
 
+	/* check for overflow */
+	vBOOL waitForever = FALSE;
+	if ((startTime + maxWaitTime) < startTime)
+	{
+		vLogWarning(__func__, "Worker sync waittime overflow. Will wait forever.");
+		waitForever = TRUE;
+	}
+
 	while (TRUE)
 	{
 		ULONGLONG currentTime = GetTickCount64();
 
 		/* on reached max time, return FALSE */
-		if (currentTime > startTime + maxWaitTime) return FALSE;
+		if (waitForever == FALSE && currentTime > startTime + maxWaitTime)
+		{
+			vLogError(__func__, "Worker thread sync timeout!");
+			return FALSE;
+		}
 
 		/* check the worker's current cycle number */
 		vTIME currentCycle = vWorkerGetCycle(worker);
