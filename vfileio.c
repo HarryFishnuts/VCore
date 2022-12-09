@@ -7,34 +7,12 @@
 #include "vfileio.h"
 
 
-/* ========== HELPER AND CALLBACK				==========	*/
-static void vhReadCompleteCallback(DWORD errorCode, DWORD bytesTransferred,
-	LPOVERLAPPED readInstructions)
-{
-	if (errorCode == NO_ERROR) return;
-
-	vLogErrorFormatted(__func__, "File read failed. Error code: %d.",
-		errorCode);
-	return;
-}
-
-static void vhWriteCompleteCallback(DWORD errorCode, DWORD bytesTransferred,
-	LPOVERLAPPED readInstructions)
-{
-	if (errorCode == NO_ERROR) return;
-
-	vLogErrorFormatted(__func__, "File write failed. Error code: %d.",
-		errorCode);
-	return;
-}
-
-
 /* ========== CREATION AND DESTRUCTION			==========	*/
 VAPI HANDLE vFileCreate(const char* fileName)
 {
 	/* create new file */
 	HANDLE fHndl = CreateFileA(fileName, (GENERIC_READ | GENERIC_WRITE),
-		NO_FLAGS, NULL, CREATE_ALWAYS, FILE_FLAG_OVERLAPPED, NULL);
+		NO_FLAGS, NULL, CREATE_ALWAYS, NO_FLAGS, NULL);
 	if (fHndl == INVALID_HANDLE_VALUE)
 	{
 		vLogErrorFormatted(__func__, "Unable to open file '%s'. Win32 Error: %d.",
@@ -50,7 +28,7 @@ VAPI HANDLE vFileOpen(const char* fileName)
 {
 	/* open file that already exists */
 	HANDLE fHndl = CreateFileA(fileName, (GENERIC_READ | GENERIC_WRITE),
-		NO_FLAGS, NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, NULL);
+		NO_FLAGS, NULL, OPEN_EXISTING, NO_FLAGS, NULL);
 	if (fHndl == INVALID_HANDLE_VALUE)
 	{
 		vLogErrorFormatted(__func__, "Unable to open file '%s'. Win32 Error: %d.",
@@ -89,13 +67,15 @@ VAPI vBOOL vFileRead(HANDLE fHndl, vUI32 readOffset, vUI32 readAmount,
 	vZeroMemory(&readInstructions, sizeof(readInstructions));
 	readInstructions.Offset = readOffset;
 
-	BOOL result = ReadFileEx(fHndl, outBuffer, readAmount, &readInstructions,
-		vhReadCompleteCallback);
-	if (result == ZERO) 
+	BOOL result = ReadFile(fHndl, outBuffer, readAmount, NULL,
+		&readInstructions);
+
+	if (result == FALSE) 
 	{
 		vLogErrorFormatted(__func__, "File read failed. Win32 Error: %d.",
 			GetLastError());
 	}
+
 	return result;
 }
 
@@ -106,8 +86,9 @@ VAPI vBOOL vFileWrite(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
 	vZeroMemory(&writeInstructions, sizeof(writeInstructions));
 	writeInstructions.Offset = writeOffset;
 
-	BOOL result = WriteFileEx(fHndl, inBuffer, writeAmount, &writeInstructions,
-		vhWriteCompleteCallback);
+	BOOL result = WriteFile(fHndl, inBuffer, writeAmount, NULL,
+		&writeInstructions);
+
 	if (result == ZERO)
 	{
 		vLogErrorFormatted(__func__, "File write failed. Win32 Error: %d.",
@@ -115,46 +96,6 @@ VAPI vBOOL vFileWrite(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
 	}
 		
 	return result;
-}
-
-VAPI vBOOL vFileReadLocked(HANDLE fHndl, vUI32 readOffset, vUI32 readAmount,
-	vPTR outBuffer)
-{
-	/* SYNC		*/ EnterCriticalSection(&_vcore.fileLock);
-
-	OVERLAPPED readInstructions;
-	vZeroMemory(&readInstructions, sizeof(readInstructions));
-	readInstructions.Offset = readOffset;
-
-	BOOL result = ReadFile(fHndl, outBuffer, readAmount, NULL, &readInstructions);
-	if (result == ZERO)
-	{
-		vLogErrorFormatted(__func__, "File read failed. Win32 Error: %d.",
-			GetLastError());
-	}
-
-	/* UNSYNC	*/ LeaveCriticalSection(&_vcore.fileLock);
-
-	return result;
-}
-
-VAPI vBOOL vFileWriteLocked(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
-	vPTR inBuffer)
-{
-	/* SYNC		*/ EnterCriticalSection(&_vcore.fileLock);
-
-	OVERLAPPED writeInstructions;
-	vZeroMemory(&writeInstructions, sizeof(writeInstructions));
-	writeInstructions.Offset = writeOffset;
-
-	BOOL result = WriteFile(fHndl, inBuffer, writeAmount, NULL, &writeInstructions);
-	if (result == ZERO)
-	{
-		vLogErrorFormatted(__func__, "File write failed. Win32 Error: %d.",
-			GetLastError());
-	}
-
-	/* UNSYNC	*/ LeaveCriticalSection(&_vcore.fileLock);
 }
 
 

@@ -22,10 +22,6 @@ VAPI vBOOL vFileRead(HANDLE fHndl, vUI32 readOffset, vUI32 readAmount,
 	vPTR outBuffer);
 VAPI vBOOL vFileWrite(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
 	vPTR inBuffer);
-VAPI vBOOL vFileReadLocked(HANDLE fHndl, vUI32 readOffset, vUI32 readAmount,
-	vPTR outBuffer);
-VAPI vBOOL vFileWriteLocked(HANDLE fHndl, vUI32 writeOffset, vUI32 writeAmount,
-	vPTR inBuffer);
 
 
 /* ========== FILE INFORMATION					==========	*/
