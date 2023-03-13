@@ -27,10 +27,10 @@ static __forceinline void vfWriteEntryBufferToFile(const char* filename)
 	HANDLE fHndl = CreateFileA(filename, (GENERIC_READ | GENERIC_WRITE), NO_FLAGS,
 		NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_COMPRESSED, NULL);
 
-	/* write to file asynchronously */
+	/* write to file */
 	OVERLAPPED overLapped = { 0 };
-	BOOL result = WriteFileEx(fHndl, buffer, sizeof(vEntryBuffer), &overLapped,
-		vfFileWriteCompletionCallback);
+	BOOL result = WriteFile(fHndl, buffer, sizeof(vEntryBuffer), NULL,
+		&overLapped);
 
 	if (result == ZERO) vCoreFatalError(__func__, "Attempted to write entry buffer to"
 		" a file but failed.");
